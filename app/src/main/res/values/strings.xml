@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">EduFlex</string>
+
+    <!-- Onboarding: common -->
+    <string name="onb_skip">Skip</string>
+    <string name="onb_back">Back</string>
+    <string name="onb_next">Next</string>
+    <string name="onb_get_started">Get Started</string>
+
+    <!-- Onboarding: screen 0 (Welcome) -->
+    <string name="onb_welcome_title">Welcome to EduFlex</string>
+    <string name="onb_welcome_desc">Your personalized learning journey starts here. Discover courses, connect with teachers, and track your progress all in one place.</string>
+
+    <!-- Onboarding: screen 1 (Explore Courses) -->
+    <string name="onb_explore_title">Explore Courses</string>
+    <string name="onb_explore_desc">Browse through our extensive library of interactive courses designed by expert educators. Learn at your own pace with engaging content.</string>
+
+    <!-- Onboarding: screen 2 (Live Learning) -->
+    <string name="onb_live_title">Live Learning</string>
+    <string name="onb_live_desc">Join live classes and interactive sessions with teachers and fellow students. Ask questions and participate in real-time discussions.</string>
+
+    <!-- Onboarding: screen 3 (Earn Rewards) -->
+    <string name="onb_rewards_title">Earn Rewards</string>
+    <string name="onb_rewards_desc">Track your achievements and earn rewards as you progress through courses. Unlock badges and certificates to showcase your skills.</string>
+
+    <!-- Accessibility / content descriptions -->
+    <string name="cd_onb_background">Onboarding background image</string>
+    <string name="cd_icon_welcome">Rocket icon</string>
+    <string name="cd_icon_explore">Book icon</string>
+    <string name="cd_icon_live">Video camera icon</string>
+    <string name="cd_icon_rewards">Trophy icon</string>
+
+    <!-- login -->
+    <string name="login_welcome">Welcome Back</string>
+    <string name="login_subtitle">Log in to continue your learning journey</string>
+    <string name="role_student">Student</string>
+    <string name="role_teacher">Teacher</string>
+    <string name="role_admin">Admin</string>
+    <string name="login_email_hint">Email</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_remember">Remember me</string>
+    <string name="login_forgot">Forgot password?</string>
+    <string name="login_cta">Login</string>
+    <string name="login_signup_rich">Don’t have an account? Sign up</string>
+    <string name="login_admin_portal">Administrator Portal</string>
+    <string name="login_copyright">© 2025 EduFlex. All rights reserved.</string>
+
+    <!-- home -->
+    <string name="home_greeting">Hi, %1$s!</string>
+    <string name="home_prompt">What would you like to learn today?</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_courses">Courses</string>
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_profile">Profile</string>
+    
+    <!-- Firebase Google Sign-In -->
+    <!-- default_web_client_id is automatically generated from google-services.json -->
+
+</resources>

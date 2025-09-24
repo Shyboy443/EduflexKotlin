@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions for image upload functionality -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    
+    <!-- Internet permission for Firebase and file uploads -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Camera feature declaration -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
+    <application
+        android:name=".EdApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Ed">
+        <!-- Splash Activity - Main Launcher -->
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Ed.Splash">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity
+            android:name=".MainActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Ed">
+        </activity>
+        <activity android:name=".HomeActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".LoginActivity" android:exported="false">
+        </activity>
+        <activity android:name=".SignUpActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".ThemeSelectionActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".StudentDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".TeacherDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".AdminDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".AdminSetupActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Course Creation Activities -->
+        <activity android:name=".CourseCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".EnhancedCourseCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".TeacherCourseUploadActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".ModuleCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Course Management Activities -->
+        <activity android:name=".CourseListActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".CourseDetailsActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".CoursePreviewActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".CourseCatalogActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".CourseEnrollmentActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Student Activities -->
+        <activity android:name=".StudentCoursesActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".StudentProfileActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".StudentEngagementActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".MyEnrolledCoursesActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Teacher Activities -->
+        <activity android:name=".EnhancedTeacherDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Assignment and Grading Activities -->
+        <activity android:name=".AssignmentListActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".AssignmentCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".GradingSystemActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".AIQuizGenerationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Material Upload Activities -->
+        <activity android:name=".MaterialUploadActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Payment Activities -->
+        <activity android:name=".PaymentHistoryActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".PaymentDetailsActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Other Activities -->
+        <activity android:name=".DashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".NotificationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".SecurityActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".DebugUserDataActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+
+    </application>
+
+</manifest>

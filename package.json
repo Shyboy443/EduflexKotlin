@@ -1,0 +1,22 @@
+{
+  "name": "firebase-data-seeder",
+  "version": "1.0.0",
+  "description": "Firebase Firestore data seeder for educational app",
+  "main": "simple_seeder.js",
+  "scripts": {
+    "seed": "node simple_seeder.js",
+    "start": "node simple_seeder.js"
+  },
+  "dependencies": {
+    "firebase": "^12.3.0",
+    "firebase-admin": "^12.0.0"
+  },
+  "keywords": [
+    "firebase",
+    "firestore",
+    "seeder",
+    "education"
+  ],
+  "author": "EduFlex Team",
+  "license": "MIT"
+}

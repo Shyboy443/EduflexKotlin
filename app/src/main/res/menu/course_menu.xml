@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_edit"
+        android:title="Edit Course"
+        android:icon="@drawable/ic_edit" />
+    
+    <item
+        android:id="@+id/action_publish_unpublish"
+        android:title="Publish Course"
+        android:icon="@drawable/ic_publish" />
+    
+    <item
+        android:id="@+id/action_duplicate"
+        android:title="Duplicate Course"
+        android:icon="@drawable/ic_add" />
+    
+    <item
+        android:id="@+id/action_delete"
+        android:title="Delete Course"
+        android:icon="@drawable/ic_delete" />
+</menu>

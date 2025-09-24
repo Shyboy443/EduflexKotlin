@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical">
+
+    <!-- Activity Icon -->
+    <ImageView
+        android:id="@+id/iv_activity_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_check_circle"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="Activity Icon" />
+
+    <!-- Activity Content -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Activity Description -->
+        <TextView
+            android:id="@+id/tv_activity_description"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="John completed Algebra Basics"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="2dp" />
+
+        <!-- Student and Course Info -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_student_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="John Doe"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="•"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tv_course_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mathematics 101"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Time -->
+    <TextView
+        android:id="@+id/tv_activity_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2h ago"
+        android:textSize="11sp"
+        android:textColor="@color/text_tertiary"
+        android:layout_marginStart="8dp" />
+
+</LinearLayout>

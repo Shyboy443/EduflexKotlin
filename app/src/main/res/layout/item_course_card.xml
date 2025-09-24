@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="4dp"
+    android:backgroundTint="@android:color/white"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Course Image -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="160dp">
+
+            <ImageView
+                android:id="@+id/iv_course_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="@color/background_color"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:src="@drawable/ic_book" />
+
+            <!-- Status Badge -->
+            <TextView
+                android:id="@+id/tv_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:text="Published"
+                android:textSize="12sp"
+                android:textColor="@android:color/white"
+                android:textStyle="bold"
+                android:background="@drawable/rounded_background"
+                android:backgroundTint="@color/success_color"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Menu Button -->
+            <ImageView
+                android:id="@+id/btn_menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_more_vert"
+                android:background="@drawable/circle_background"
+                android:backgroundTint="#80000000"
+                android:padding="6dp"
+                android:contentDescription="Menu"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Course Details -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Course Title -->
+            <TextView
+                android:id="@+id/tv_course_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Course Title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginBottom="4dp"
+                tools:text="Introduction to Android Development" />
+
+            <!-- Course Category -->
+            <TextView
+                android:id="@+id/tv_course_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Category"
+                android:textSize="12sp"
+                android:textColor="@color/primary_color"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"
+                tools:text="Programming" />
+
+            <!-- Course Stats Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <!-- Students Count -->
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_people"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_students_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 students"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginEnd="16dp"
+                    tools:text="24 students" />
+
+                <!-- Rating -->
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_star"
+                    android:layout_marginEnd="4dp" />
+
+                <TextView
+                    android:id="@+id/tv_rating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0.0"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginEnd="16dp"
+                    tools:text="4.5" />
+
+                <!-- Price -->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="Free"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/success_color"
+                    android:id="@+id/tv_price"
+                    tools:text="$49.99" />
+
+            </LinearLayout>
+
+            <!-- Course Description -->
+            <TextView
+                android:id="@+id/tv_course_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Course description..."
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:layout_marginBottom="12dp"
+                tools:text="Learn the fundamentals of Android app development using Kotlin and modern Android development practices." />
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Edit"
+                    android:textSize="12sp"
+                    android:layout_marginEnd="8dp"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:strokeColor="@color/primary_color"
+                    android:textColor="@color/primary_color"
+                    app:cornerRadius="6dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="View"
+                    android:textSize="12sp"
+                    android:backgroundTint="@color/primary_color"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="6dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

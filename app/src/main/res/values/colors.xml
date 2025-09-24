@@ -1,0 +1,111 @@
+<resources>
+    <!-- Brand palette -->
+    <color name="brand_primary">#3A9BDC</color>   <!-- blue -->
+    <color name="brand_primary_light">#1F3A9BDC</color>   <!-- 12% opacity blue for ripple -->
+    <color name="brand_ink">#2F2F2F</color>       <!-- near black -->
+    <color name="brand_surface">#F5E9DA</color>   <!-- warm off-white -->
+
+    <!-- neutrals derived from the 3 -->
+    <color name="ink_60">#992F2F2F</color>  <!-- 60% ink -->
+    <color name="ink_15">#262F2F2F</color>  <!-- 15% ink -->
+    <color name="ink_08">#142F2F2F</color>  <!-- 8% ink -->
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Primary Colors -->
+    <color name="primary_color">#3A9BDC</color>
+    <color name="primary_blue">#4A90E2</color>
+    <color name="primary_blue_dark">#357ABD</color>
+    <color name="accent_color">#FF6B35</color>
+    
+    <!-- Professional UI Colors -->
+    <color name="surface_primary">#FFFFFF</color>
+    <color name="surface_secondary">#F8F9FA</color>
+    <color name="surface_tertiary">#E9ECEF</color>
+    <color name="divider_color">#E0E0E0</color>
+    <color name="shadow_color">#1A000000</color>
+    
+    <!-- Role Button Colors -->
+    <color name="role_button_background">#FFFFFF</color>
+    <color name="role_button_background_unselected">#F8F9FA</color>
+    <color name="role_button_background_selected">@color/brand_primary</color>
+    <color name="role_button_text_color">@color/brand_primary</color>
+    <color name="role_button_text_color_unselected">#6C757D</color>
+    <color name="role_button_text_color_selected">#FFFFFF</color>
+    <color name="role_button_icon_color">@color/brand_primary</color>
+    <color name="role_button_icon_color_unselected">#6C757D</color>
+    <color name="role_button_icon_color_selected">#FFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_tertiary">#999999</color>
+    
+    <!-- Background Colors -->
+    <color name="background_light">#F8F9FA</color>
+    <color name="background_white">#FFFFFF</color>
+    <color name="background_surface">#FFFFFF</color>
+    <color name="background_card">#FFFFFF</color>
+    
+    <!-- Border Colors -->
+    <color name="border_light">#E0E0E0</color>
+    
+    <!-- Skeleton Loading Colors -->
+    <color name="skeleton_base">#F0F0F0</color>
+    <color name="skeleton_shimmer">#E0E0E0</color>
+    <color name="border_medium">#CCCCCC</color>
+    
+    <!-- Dashboard Icon Colors -->
+    <color name="bottom_nav_icon_color">#666666</color>
+    <color name="bottom_nav_icon_selected">#4A90E2</color>
+    <color name="bottom_nav_background">#FFFFFF</color>
+    <color name="live_icon_color">#FF4444</color>
+    <color name="rewards_icon_color">#FFD700</color>
+    <color name="search_icon_color">#999999</color>
+    <color name="timer_icon_color">#4A90E2</color>
+    <color name="download_icon_color">#4A90E2</color>
+    <color name="notification_icon_color">#666666</color>
+    
+    <!-- Dashboard Colors -->
+    <color name="dashboard_background">#F8F9FA</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="progress_bar_color">#4A90E2</color>
+    <color name="progress_background">#E0E0E0</color>
+    <color name="continue_button_color">#4A90E2</color>
+    <color name="view_all_text_color">#4A90E2</color>
+    
+    <!-- Social Media Colors -->
+    <color name="facebook_ripple">#166FE5</color>
+    
+    <!-- Additional Brand Colors -->
+    <color name="brand_secondary">#6366F1</color>
+    <color name="brand_accent">#EC4899</color>
+    <color name="brand_warning">#F59E0B</color>
+    
+    <!-- Additional Text Colors -->
+    <color name="text_hint">#999999</color>
+    
+    <!-- Teacher Dashboard Colors -->
+    <color name="background_color">#F8F9FA</color>
+    <color name="blue_accent">#4A90E2</color>
+    <color name="green_accent">#10B981</color>
+    <color name="orange_accent">#F59E0B</color>
+    <color name="purple_accent">#8B5CF6</color>
+    <color name="red_accent">#EF4444</color>
+    <color name="success_color">#10B981</color>
+    
+    <!-- Missing colors for layouts -->
+    <color name="primary">#3A9BDC</color>
+    <color name="primary_light">#1F3A9BDC</color>
+    <color name="divider">#E0E0E0</color>
+    <color name="warning">#F59E0B</color>
+    <color name="error">#EF4444</color>
+    <color name="error_color">#EF4444</color>
+    <color name="success">#10B981</color>
+    <color name="info">#3B82F6</color>
+    <color name="accent">#EC4899</color>
+    <color name="background">#F8F9FA</color>
+    <color name="surface_color">#FFFFFF</color>
+    <color name="bottom_nav_color">#FFFFFF</color>
+    <color name="warning_color">#FF9800</color>
+    <color name="info_color">#2196F3</color>
+</resources>

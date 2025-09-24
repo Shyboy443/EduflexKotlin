@@ -1,0 +1,402 @@
+package com.example.ed
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import android.widget.PopupMenu
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.ed.R
+import com.example.ed.adapters.CourseAdapter
+import com.example.ed.databinding.ActivityCourseListBinding
+import com.example.ed.models.Course
+import com.example.ed.utils.SecurityUtils
+import com.google.android.material.tabs.TabLayout
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
+import kotlinx.coroutines.launch
+
+class CourseListActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityCourseListBinding
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
+    private lateinit var courseAdapter: CourseAdapter
+    
+    private var allCourses = mutableListOf<Course>()
+    private var filteredCourses = mutableListOf<Course>()
+    private var currentFilter = "All"
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        try {
+            binding = ActivityCourseListBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+
+            // Initialize Firebase
+            auth = FirebaseAuth.getInstance()
+            db = FirebaseFirestore.getInstance()
+
+            setupUI()
+            setupClickListeners()
+            setupRecyclerView()
+            setupTabLayout()
+            setupSearch()
+            loadCourses()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error initializing course list: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            finish()
+        }
+    }
+
+    private fun setupUI() {
+        // Check if user is authenticated
+        if (auth.currentUser == null) {
+            Toast.makeText(this, "Please log in to view courses", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+    }
+
+    private fun setupClickListeners() {
+        binding.btnBack.setOnClickListener {
+            onBackPressed()
+        }
+
+        binding.btnAddCourse.setOnClickListener {
+            navigateToCreateCourse()
+        }
+
+        binding.fabAddCourse.setOnClickListener {
+            navigateToCreateCourse()
+        }
+
+        binding.btnCreateFirstCourse.setOnClickListener {
+            navigateToCreateCourse()
+        }
+
+        binding.btnFilter.setOnClickListener {
+            // TODO: Implement filter dialog
+            Toast.makeText(this, "Filter options coming soon", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun setupRecyclerView() {
+        courseAdapter = CourseAdapter(
+            courses = filteredCourses,
+            onCourseClick = { course ->
+                // TODO: Navigate to course details
+                Toast.makeText(this, "Course clicked: ${course.title}", Toast.LENGTH_SHORT).show()
+            },
+            onEditClick = { course ->
+                editCourse(course)
+            },
+            onMenuClick = { course, view ->
+                showCourseMenu(course, view)
+            }
+        )
+
+        // Use GridLayoutManager for better course display
+        binding.rvCourses.layoutManager = GridLayoutManager(this, 2)
+        binding.rvCourses.adapter = courseAdapter
+    }
+
+    private fun setupTabLayout() {
+        binding.tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                when (tab?.position) {
+                    0 -> currentFilter = "All"
+                    1 -> currentFilter = "Published"
+                    2 -> currentFilter = "Drafts"
+                }
+                filterCourses()
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {}
+            override fun onTabReselected(tab: TabLayout.Tab?) {}
+        })
+    }
+
+    private fun setupSearch() {
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                filterCourses()
+            }
+        })
+    }
+
+    private fun loadCourses() {
+        val currentUser = auth.currentUser ?: return
+
+        try {
+            db.collection("courses")
+                .whereEqualTo("teacherId", currentUser.uid)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        Toast.makeText(this, "Error loading courses: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        return@addSnapshotListener
+                    }
+
+                    if (snapshot != null) {
+                        allCourses.clear()
+                        for (document in snapshot.documents) {
+                            try {
+                                val course = Course(
+                                    id = document.id,
+                                    title = document.getString("title") ?: "",
+                                    description = document.getString("description") ?: "",
+                                    category = document.getString("category") ?: "",
+                                    duration = document.getString("duration") ?: "",
+                                    difficulty = document.getString("level") ?: "",
+                                    instructor = document.getString("instructor") ?: "",
+                                    teacherId = document.getString("teacherId") ?: "",
+                                    thumbnailUrl = document.getString("imageUrl") ?: "",
+                                    isPublished = document.getBoolean("isPublished") ?: false,
+                                    createdAt = document.getLong("createdAt") ?: 0L,
+                                    updatedAt = document.getLong("updatedAt") ?: 0L,
+                                    enrolledStudents = document.getLong("enrolledStudents")?.toInt() ?: 0,
+                                    rating = document.getDouble("rating")?.toFloat() ?: 0.0f
+                                )
+                                allCourses.add(course)
+                            } catch (ex: Exception) {
+                                // Skip malformed documents
+                                continue
+                            }
+                        }
+                        filterCourses()
+                        updateEmptyState()
+                    }
+                }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Error setting up course listener: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun filterCourses() {
+        val searchQuery = binding.etSearch.text?.toString()?.lowercase()?.trim() ?: ""
+        
+        filteredCourses.clear()
+        
+        for (course in allCourses) {
+            // Apply status filter
+            val matchesStatus = when (currentFilter) {
+                "All" -> true
+                "Published" -> course.isPublished
+                "Drafts" -> !course.isPublished
+                else -> true
+            }
+            
+            // Apply search filter
+            val matchesSearch = if (searchQuery.isEmpty()) {
+                true
+            } else {
+                course.title.lowercase().contains(searchQuery) ||
+                course.description.lowercase().contains(searchQuery) ||
+                course.category.lowercase().contains(searchQuery)
+            }
+            
+            if (matchesStatus && matchesSearch) {
+                filteredCourses.add(course)
+            }
+        }
+        
+        courseAdapter.notifyDataSetChanged()
+        updateEmptyState()
+    }
+
+    private fun updateEmptyState() {
+        if (filteredCourses.isEmpty()) {
+            binding.rvCourses.visibility = View.GONE
+            binding.emptyState.visibility = View.VISIBLE
+        } else {
+            binding.rvCourses.visibility = View.VISIBLE
+            binding.emptyState.visibility = View.GONE
+        }
+    }
+
+    private fun navigateToCreateCourse() {
+        val intent = Intent(this, CourseCreationActivity::class.java)
+        createCourseLauncher.launch(intent)
+    }
+
+    private val createCourseLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // Reload courses when returning from create/edit
+            loadCourses()
+        }
+    }
+
+    private fun editCourse(course: Course) {
+        val intent = Intent(this, CourseCreationActivity::class.java)
+        intent.putExtra("courseId", course.id)
+        createCourseLauncher.launch(intent)
+    }
+
+    private fun showCourseMenu(course: Course, view: View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(R.menu.course_menu, popup.menu)
+        
+        // Update publish/unpublish menu item based on course status
+        val publishMenuItem = popup.menu.findItem(R.id.action_publish_unpublish)
+        if (course.isPublished) {
+            publishMenuItem.title = "Unpublish Course"
+        } else {
+            publishMenuItem.title = "Publish Course"
+        }
+        
+        popup.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.action_edit -> {
+                    editCourse(course)
+                    true
+                }
+                R.id.action_publish_unpublish -> {
+                    toggleCoursePublishStatus(course)
+                    true
+                }
+                R.id.action_delete -> {
+                    showDeleteConfirmation(course)
+                    true
+                }
+                R.id.action_duplicate -> {
+                    duplicateCourse(course)
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
+    private fun showDeleteConfirmation(course: Course) {
+        AlertDialog.Builder(this)
+            .setTitle("Delete Course")
+            .setMessage("Are you sure you want to delete \"${course.title}\"? This action cannot be undone.")
+            .setPositiveButton("Delete") { _, _ ->
+                deleteCourse(course)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun deleteCourse(course: Course) {
+        db.collection("courses")
+            .document(course.id)
+            .delete()
+            .addOnSuccessListener {
+                Toast.makeText(this, "Course deleted successfully", Toast.LENGTH_SHORT).show()
+                loadCourses() // Reload the list
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error deleting course: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun duplicateCourse(course: Course) {
+        val duplicatedCourse = mapOf(
+            "title" to "${course.title} (Copy)",
+            "description" to course.description,
+            "category" to course.category,
+            "difficulty" to course.difficulty,
+            "thumbnailUrl" to course.thumbnailUrl,
+            "teacherId" to auth.currentUser?.uid,
+            "teacherName" to auth.currentUser?.displayName,
+            "isPublished" to false, // Duplicated courses start as drafts
+            "createdAt" to com.google.firebase.Timestamp.now(),
+            "updatedAt" to com.google.firebase.Timestamp.now()
+        )
+
+        db.collection("courses")
+            .add(duplicatedCourse)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Course duplicated successfully", Toast.LENGTH_SHORT).show()
+                loadCourses() // Reload the list
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error duplicating course: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    private fun toggleCoursePublishStatus(course: Course) {
+        // Security check: Verify teacher permissions and course ownership
+        lifecycleScope.launch {
+            if (!SecurityUtils.canAccessTeacherFeatures()) {
+                SecurityUtils.logSecurityEvent(
+                    "unauthorized_course_publish_attempt",
+                    auth.currentUser?.uid,
+                    mapOf("courseId" to course.id)
+                )
+                Toast.makeText(this@CourseListActivity, "Access denied: Teacher permissions required", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            
+            // Verify course ownership
+            if (!SecurityUtils.validateCourseOwnership(course.id)) {
+                SecurityUtils.logSecurityEvent(
+                    "unauthorized_course_access_attempt",
+                    auth.currentUser?.uid,
+                    mapOf("courseId" to course.id, "action" to "publish_toggle")
+                )
+                Toast.makeText(this@CourseListActivity, "Access denied: You can only modify your own courses", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            
+            // Rate limiting check
+            if (!SecurityUtils.isOperationAllowed("course_publish_toggle", 3000)) {
+                Toast.makeText(this@CourseListActivity, "Please wait before toggling course status again", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            
+            val newStatus = !course.isPublished
+            val statusText = if (newStatus) "published" else "unpublished"
+            
+            db.collection("courses")
+                .document(course.id)
+                .update("isPublished", newStatus)
+                .addOnSuccessListener {
+                    // Log successful status change
+                    SecurityUtils.logSecurityEvent(
+                        "course_publish_status_changed",
+                        auth.currentUser?.uid,
+                        mapOf(
+                            "courseId" to course.id,
+                            "newStatus" to newStatus,
+                            "title" to course.title
+                        )
+                    )
+                    
+                    Toast.makeText(this@CourseListActivity, "Course $statusText successfully", Toast.LENGTH_SHORT).show()
+                    loadCourses() // Reload the course list
+                }
+                .addOnFailureListener { e ->
+                    // Log failed status change
+                    SecurityUtils.logSecurityEvent(
+                        "course_publish_status_change_failed",
+                        auth.currentUser?.uid,
+                        mapOf("courseId" to course.id, "error" to e.message.orEmpty())
+                    )
+                    
+                    Toast.makeText(this@CourseListActivity, "Error updating course status: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
+}

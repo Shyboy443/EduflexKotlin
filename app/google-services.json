@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "706298535818",
+    "firebase_url": "https://eduflex-f62b5-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "eduflex-f62b5",
+    "storage_bucket": "eduflex-f62b5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706298535818:android:68de04b0808358b03c7273",
+        "android_client_info": {
+          "package_name": "com.example.ed"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "706298535818-vphg4227pvscve2l2d4fesnsgfprbl9a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ed",
+            "certificate_hash": "4541536a9572b57124277d168ae94d497abefb14"
+          }
+        },
+        {
+          "client_id": "706298535818-6gpgne7gkv2qlem4k3qmdvhq3b2ce4um.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyChfxtlW1XrXI5gLH7tjsxDNOTfgWyoQ0Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "706298535818-6gpgne7gkv2qlem4k3qmdvhq3b2ce4um.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

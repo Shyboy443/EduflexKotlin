@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 12% brand_primary ripple -->
+    <item android:state_selected="true" android:color="#1F3A9BDC"/>
+    <!-- 08% ink ripple -->
+    <item android:color="#142F2F2F"/>
+</selector>

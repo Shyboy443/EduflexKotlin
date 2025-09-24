@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_light"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:id="@+id/ll_header"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="Back"
+                android:tint="@color/text_primary" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Create New Course"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:gravity="center"
+                android:layout_marginEnd="48dp" />
+
+        </LinearLayout>
+
+        <!-- Course Image Upload -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_image_upload"
+            android:layout_width="0dp"
+            android:layout_height="200dp"
+            android:layout_marginTop="24dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
+            app:strokeColor="@color/border_light"
+            app:strokeWidth="1dp"
+            app:layout_constraintTop_toBottomOf="@id/ll_header"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:id="@+id/ll_image_placeholder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_upload_icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/ic_add_photo"
+                    android:tint="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Add Course Image"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_secondary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Tap to upload image"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_tertiary" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/iv_course_image"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:visibility="gone" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Course Title -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_course_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:hint="Course Title"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/card_image_upload"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_course_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:maxLines="2" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Course Description -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_course_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Course Description"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/til_course_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_course_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine|textCapSentences"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:minLines="3"
+                android:maxLines="5"
+                android:gravity="top" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Course Category -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_course_category"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Course Category"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/til_course_description"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <AutoCompleteTextView
+                android:id="@+id/et_course_category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="none"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Course Duration and Level Row -->
+        <LinearLayout
+            android:id="@+id/ll_duration_level"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            app:layout_constraintTop_toBottomOf="@id/til_course_category"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <!-- Course Duration -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_course_duration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:hint="Duration (weeks)"
+                app:boxStrokeColor="@color/brand_primary"
+                app:hintTextColor="@color/text_secondary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_course_duration"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Course Level -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_course_level"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:hint="Level"
+                app:boxStrokeColor="@color/brand_primary"
+                app:hintTextColor="@color/text_secondary">
+
+                <AutoCompleteTextView
+                    android:id="@+id/et_course_level"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="none"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+        <!-- Course Price -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_course_price"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Course Price ($)"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:prefixText="$"
+            app:layout_constraintTop_toBottomOf="@id/ll_duration_level"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_course_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Course Prerequisites -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_course_prerequisites"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Prerequisites (Optional)"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/til_course_price"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_course_prerequisites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine|textCapSentences"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:minLines="2"
+                android:maxLines="3"
+                android:gravity="top" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Learning Objectives -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_learning_objectives"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="Learning Objectives"
+            app:boxStrokeColor="@color/brand_primary"
+            app:hintTextColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/til_course_prerequisites"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_learning_objectives"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine|textCapSentences"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:minLines="3"
+                android:maxLines="5"
+                android:gravity="top" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Course Deadline Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_deadline"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="2dp"
+            app:strokeColor="@color/brand_primary"
+            app:strokeWidth="1dp"
+            app:layout_constraintTop_toBottomOf="@id/card_deadline"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Set Course Deadline"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switch_deadline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:thumbTint="@color/brand_primary"
+                        app:trackTint="@color/brand_primary_light" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/ll_deadline_picker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_select_date"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:text="Select Date"
+                        android:textAllCaps="false"
+                        app:strokeColor="@color/brand_primary"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_calendar"
+                        app:iconGravity="start" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_select_time"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:text="Select Time"
+                        android:textAllCaps="false"
+                        app:strokeColor="@color/brand_primary"
+                        app:cornerRadius="8dp"
+                        app:icon="@drawable/ic_time"
+                        app:iconGravity="start" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_selected_deadline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="No deadline set"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center"
+                    android:visibility="gone" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:id="@+id/ll_action_buttons"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:layout_marginBottom="24dp"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            app:layout_constraintTop_toBottomOf="@id/til_learning_objectives"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <!-- Save as Draft Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save_draft"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Save Draft"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                app:strokeColor="@color/brand_primary"
+                app:cornerRadius="12dp" />
+
+            <!-- Create Course Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_create_course"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Create Course"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textAllCaps="false"
+                app:backgroundTint="@color/brand_primary"
+                app:cornerRadius="12dp"
+                android:elevation="4dp"
+                app:rippleColor="@color/brand_primary_light" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</ScrollView>
