@@ -196,10 +196,8 @@ class StudentsFragment : Fragment() {
                 val enrollmentInfo = StudentEnrollment(
                     courseId = courseId,
                     courseName = courseName,
-                    enrollmentDate = enrollmentDate,
-                    progressPercentage = progress,
-                    isCompleted = isCompleted,
-                    lastAccessedDate = lastAccessDate
+                    enrolledAt = enrollmentDate,
+                    progress = (progress * 100).toInt() // Convert to percentage int
                 )
                 
                 studentMap.getOrPut(studentId) { mutableListOf() }.add(enrollmentInfo)
@@ -225,7 +223,7 @@ class StudentsFragment : Fragment() {
                         
                         // Calculate average progress
                         val averageProgress = if (enrollments.isNotEmpty()) {
-                            enrollments.map { it.progressPercentage }.average()
+                            enrollments.map { it.progress.toDouble() }.average() / 100.0 // Convert back to decimal
                         } else 0.0
                         
                         val studentInfo = StudentInfo(

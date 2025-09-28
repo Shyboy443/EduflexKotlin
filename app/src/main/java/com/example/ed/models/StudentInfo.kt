@@ -10,7 +10,7 @@ data class StudentInfo(
     val fullName: String = "",
     val email: String = "",
     val profileImageUrl: String = "",
-    val enrolledCourses: List<StudentEnrollment> = emptyList(),
+    val enrolledCourses: @RawValue List<StudentEnrollment> = emptyList(),
     val totalEnrolledCourses: Int = 0,
     val averageProgress: Double = 0.0,
     val lastActiveTimestamp: Long = 0L,
@@ -21,18 +21,6 @@ data class StudentInfo(
     val totalAssignments: Int = 0
 ) : Parcelable
 
-@Parcelize
-data class StudentEnrollment(
-    val courseId: String = "",
-    val courseName: String = "",
-    val enrollmentDate: Long = 0L,
-    val progressPercentage: Double = 0.0,
-    val isCompleted: Boolean = false,
-    val lastAccessedDate: Long = 0L,
-    val pointsEarned: Int = 0,
-    val assignmentsCompleted: Int = 0,
-    val totalAssignments: Int = 0
-) : Parcelable
 
 @Parcelize
 data class StudentProgressInfo(
