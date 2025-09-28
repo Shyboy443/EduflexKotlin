@@ -29,7 +29,7 @@ class StudentsAdapter(
     private var filteredStudents = students.toMutableList()
 
     inner class StudentViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val cardStudent: MaterialCardView = itemView.findViewById(R.id.root)
+        private val cardStudent: MaterialCardView = itemView.findViewById(R.id.card_student)
         private val ivStudentAvatar: ImageView = itemView.findViewById(R.id.iv_student_avatar)
         private val tvStudentName: TextView = itemView.findViewById(R.id.tv_student_name)
         private val tvStudentEmail: TextView = itemView.findViewById(R.id.tv_student_email)
@@ -162,6 +162,7 @@ class StudentsAdapter(
             
             val matchesCourse = if (courseFilter.isNullOrBlank() || courseFilter == "All Courses") {
                 true
+
             } else {
                 student.enrolledCourses.any { it.courseName.equals(courseFilter, ignoreCase = true) }
             }
