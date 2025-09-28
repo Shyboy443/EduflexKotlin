@@ -192,12 +192,14 @@ class TeacherSettingsFragment : Fragment() {
         // Load profile picture
         val profileImageUrl = userData["profileImageUrl"]?.toString()
         if (!profileImageUrl.isNullOrEmpty() && binding?.ivProfilePicture != null) {
-            Glide.with(this)
-                .load(profileImageUrl)
-                .circleCrop()
-                .placeholder(R.drawable.ic_person)
-                .error(R.drawable.ic_person)
-                .into(binding.ivProfilePicture)
+            binding?.ivProfilePicture?.let { imageView ->
+                Glide.with(this)
+                    .load(profileImageUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.ic_person)
+                    .error(R.drawable.ic_person)
+                    .into(imageView)
+            }
         } else {
             binding?.ivProfilePicture?.setImageResource(R.drawable.ic_person)
         }
@@ -230,7 +232,7 @@ class TeacherSettingsFragment : Fragment() {
     private fun uploadProfileImage(uri: Uri) {
         val currentUser = auth.currentUser ?: return
         
-        binding.progressBarProfile.visibility = View.VISIBLE
+        binding?.progressBarProfile?.visibility = View.VISIBLE
         
         lifecycleScope.launch {
             try {
@@ -248,17 +250,19 @@ class TeacherSettingsFragment : Fragment() {
                     .await()
                 
                 // Update UI
-                Glide.with(this@TeacherSettingsFragment)
-                    .load(downloadUrl)
-                    .circleCrop()
-                    .into(binding.ivProfilePicture)
+                binding?.ivProfilePicture?.let { imageView ->
+                    Glide.with(this@TeacherSettingsFragment)
+                        .load(downloadUrl)
+                        .circleCrop()
+                        .into(imageView)
+                }
                 
                 Toast.makeText(requireContext(), "Profile picture updated", Toast.LENGTH_SHORT).show()
                 
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Failed to upload image: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
-                binding.progressBarProfile.visibility = View.GONE
+                binding?.progressBarProfile?.visibility = View.GONE
             }
         }
     }
@@ -275,7 +279,7 @@ class TeacherSettingsFragment : Fragment() {
                     .await()
                 
                 // Update UI
-                binding.ivProfilePicture.setImageResource(R.drawable.ic_person)
+                binding?.ivProfilePicture?.setImageResource(R.drawable.ic_person)
                 
                 Toast.makeText(requireContext(), "Profile picture removed", Toast.LENGTH_SHORT).show()
                 
@@ -318,7 +322,7 @@ class TeacherSettingsFragment : Fragment() {
             return
         }
         
-        binding.progressBarProfile.visibility = View.VISIBLE
+        binding?.progressBarProfile?.visibility = View.VISIBLE
         
         lifecycleScope.launch {
             try {
@@ -346,7 +350,7 @@ class TeacherSettingsFragment : Fragment() {
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Failed to update profile: ${e.message}", Toast.LENGTH_SHORT).show()
             } finally {
-                binding.progressBarProfile.visibility = View.GONE
+                binding?.progressBarProfile?.visibility = View.GONE
             }
         }
     }
@@ -402,7 +406,7 @@ class TeacherSettingsFragment : Fragment() {
     }
 
     private fun performSignOut() {
-        binding.progressBarProfile.visibility = View.VISIBLE
+        binding?.progressBarProfile?.visibility = View.VISIBLE
         
         lifecycleScope.launch {
             try {
@@ -418,7 +422,7 @@ class TeacherSettingsFragment : Fragment() {
                 
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Sign out failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                binding.progressBarProfile.visibility = View.GONE
+                binding?.progressBarProfile?.visibility = View.GONE
             }
         }
     }
