@@ -54,7 +54,7 @@ class TeacherDashboardActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
 
-        // Initialize UI components
+        // Initialize UI components with consistent behavior regardless of theme
         initializeViews()
         
         // Set up click listeners
@@ -68,6 +68,9 @@ class TeacherDashboardActivity : AppCompatActivity() {
         
         // Set profile initial
         setProfileInitial()
+        
+        // Ensure consistent fragment state after theme changes
+        restoreFragmentState(savedInstanceState)
     }
 
     private fun initializeViews() {
@@ -298,11 +301,7 @@ class TeacherDashboardActivity : AppCompatActivity() {
             }
         }
         
-        // Set initial fragment
-        if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
-            switchToFragment(DashboardFragment())
-            bottomNavigation.selectedItemId = R.id.nav_dashboard
-        }
+        // Fragment initialization is now handled in restoreFragmentState()
     }
 
     private fun switchToFragment(fragment: Fragment) {
@@ -311,12 +310,43 @@ class TeacherDashboardActivity : AppCompatActivity() {
             .replace(R.id.fragment_container, fragment)
             .commit()
     }
+    
+    private fun restoreFragmentState(savedInstanceState: Bundle?) {
+        // Ensure consistent fragment loading regardless of theme changes
+        if (savedInstanceState == null) {
+            // First time creation - always load dashboard
+            if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
+                switchToFragment(DashboardFragment())
+                bottomNavigation.selectedItemId = R.id.nav_dashboard
+            }
+        } else {
+            // Activity recreation (theme change) - maintain current fragment
+            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+            if (currentFragment == null) {
+                // Fallback to dashboard if no fragment found
+                switchToFragment(DashboardFragment())
+                bottomNavigation.selectedItemId = R.id.nav_dashboard
+            }
+            // Fragment manager will automatically restore the previous fragment
+        }
+    }
 
     fun switchToCoursesFragment() {
         switchToFragment(CoursesFragment())
         bottomNavigation.selectedItemId = R.id.nav_courses
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Ensure consistent theme application
+        ThemeManager.ensureConsistentTheme(this)
+    }
+    
+    override fun recreate() {
+        // Ensure consistent recreation behavior for theme changes
+        super.recreate()
+    }
+    
     override fun onBackPressed() {
         // Handle back press - maybe show confirmation dialog
         super.onBackPressed()

@@ -67,4 +67,21 @@ object ThemeManager {
         applyTheme(theme)
         activity.recreate()
     }
+    
+    /**
+     * Ensures consistent theme application during activity lifecycle
+     * Call this in onResume to handle theme changes from other activities
+     */
+    fun ensureConsistentTheme(activity: android.app.Activity) {
+        val savedTheme = getCurrentTheme(activity)
+        val currentMode = when (androidx.appcompat.app.AppCompatDelegate.getDefaultNightMode()) {
+            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES -> THEME_DARK
+            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO -> THEME_LIGHT
+            else -> THEME_LIGHT
+        }
+        
+        if (savedTheme != currentMode) {
+            applyTheme(savedTheme)
+        }
+    }
 }
