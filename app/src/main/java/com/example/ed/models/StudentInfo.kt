@@ -2,6 +2,7 @@ package com.example.ed.models
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 
 @Parcelize
 data class StudentInfo(
@@ -9,7 +10,7 @@ data class StudentInfo(
     val fullName: String = "",
     val email: String = "",
     val profileImageUrl: String = "",
-    val enrolledCourses: List<EnrollmentInfo> = emptyList(),
+    val enrolledCourses: List<StudentEnrollment> = emptyList(),
     val totalEnrolledCourses: Int = 0,
     val averageProgress: Double = 0.0,
     val lastActiveTimestamp: Long = 0L,
@@ -21,11 +22,11 @@ data class StudentInfo(
 ) : Parcelable
 
 @Parcelize
-data class EnrollmentInfo(
+data class StudentEnrollment(
     val courseId: String = "",
     val courseName: String = "",
     val enrollmentDate: Long = 0L,
-    val progress: Double = 0.0,
+    val progressPercentage: Double = 0.0,
     val isCompleted: Boolean = false,
     val lastAccessedDate: Long = 0L,
     val pointsEarned: Int = 0,
@@ -34,7 +35,7 @@ data class EnrollmentInfo(
 ) : Parcelable
 
 @Parcelize
-data class StudentProgress(
+data class StudentProgressInfo(
     val studentId: String = "",
     val courseId: String = "",
     val completedLessons: Int = 0,
@@ -45,7 +46,7 @@ data class StudentProgress(
     val timeSpentHours: Double = 0.0,
     val streakDays: Int = 0,
     val lastActivityDate: Long = 0L,
-    val achievements: List<String> = emptyList()
+    val achievements: @RawValue List<String> = emptyList()
 ) : Parcelable
 
 enum class StudentStatus {

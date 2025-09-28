@@ -18,7 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ed.R
 import com.example.ed.adapters.StudentsAdapter
-import com.example.ed.models.EnrollmentInfo
+import com.example.ed.models.StudentEnrollment
 import com.example.ed.models.StudentInfo
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.chip.Chip
@@ -181,7 +181,7 @@ class StudentsFragment : Fragment() {
                 .get()
                 .await()
             
-            val studentMap = mutableMapOf<String, MutableList<EnrollmentInfo>>()
+            val studentMap = mutableMapOf<String, MutableList<StudentEnrollment>>()
             
             // Group enrollments by student ID
             for (document in enrollmentsSnapshot.documents) {
@@ -193,11 +193,11 @@ class StudentsFragment : Fragment() {
                 val isCompleted = document.getBoolean("isCompleted") ?: false
                 val lastAccessDate = document.getLong("lastAccessedDate") ?: 0L
                 
-                val enrollmentInfo = EnrollmentInfo(
+                val enrollmentInfo = StudentEnrollment(
                     courseId = courseId,
                     courseName = courseName,
                     enrollmentDate = enrollmentDate,
-                    progress = progress,
+                    progressPercentage = progress,
                     isCompleted = isCompleted,
                     lastAccessedDate = lastAccessDate
                 )
@@ -224,7 +224,9 @@ class StudentsFragment : Fragment() {
                         val joinedTimestamp = userDoc.getLong("createdAt") ?: 0L
                         
                         // Calculate average progress
-                        val averageProgress = enrollments.map { it.progress }.average()
+                        val averageProgress = if (enrollments.isNotEmpty()) {
+                            enrollments.map { it.progressPercentage }.average()
+                        } else 0.0
                         
                         val studentInfo = StudentInfo(
                             studentId = studentId,
