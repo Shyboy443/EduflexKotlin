@@ -174,12 +174,17 @@ class StudentsFragment : Fragment() {
 
     private suspend fun loadEnrolledStudents(teacherId: String) {
         try {
-            // Get all enrollments for teacher's courses
-            val enrollmentsSnapshot = firestore.collection("enrollments")
-                .whereEqualTo("teacherId", teacherId)
-                .orderBy("enrollmentDate", Query.Direction.DESCENDING)
-                .get()
-                .await()
+            // First, try to get enrollments with teacherId field
+            var enrollmentsSnapshot = try {
+                firestore.collection("enrollments")
+                    .whereEqualTo("teacherId", teacherId)
+                    .get()
+                    .await()
+            } catch (e: Exception) {
+                Log.w(TAG, "Primary enrollment query failed, trying alternative approach", e)
+                // Fallback: get teacher's courses first, then find enrollments
+                loadEnrollmentsByTeacherCourses(teacherId)
+            }
             
             val studentMap = mutableMapOf<String, MutableList<StudentEnrollment>>()
             
@@ -246,9 +251,14 @@ class StudentsFragment : Fragment() {
                 }
             }
             
+            // Sort students by most recent enrollment
+            val sortedStudents = studentsList.sortedByDescending { student ->
+                student.enrolledCourses.maxOfOrNull { it.enrolledAt } ?: 0L
+            }
+            
             // Update UI
             students.clear()
-            students.addAll(studentsList)
+            students.addAll(sortedStudents)
             studentsAdapter.updateStudents(students)
             updateTotalStudentsCount()
             
@@ -261,6 +271,30 @@ class StudentsFragment : Fragment() {
         } catch (e: Exception) {
             Log.e(TAG, "Error loading enrolled students", e)
             showErrorState("Failed to load students: ${e.message}")
+        }
+    }
+    
+    private suspend fun loadEnrollmentsByTeacherCourses(teacherId: String): com.google.firebase.firestore.QuerySnapshot {
+        // Alternative approach: Get teacher's courses first, then find enrollments for those courses
+        val teacherCourses = firestore.collection("courses")
+            .whereEqualTo("instructorId", teacherId)
+            .get()
+            .await()
+        
+        val courseIds = teacherCourses.documents.mapNotNull { it.id }
+        
+        return if (courseIds.isNotEmpty()) {
+            // Get enrollments for teacher's courses
+            firestore.collection("enrollments")
+                .whereIn("courseId", courseIds.take(10)) // Firestore 'in' query limit is 10
+                .get()
+                .await()
+        } else {
+            // Return empty result if no courses found
+            firestore.collection("enrollments")
+                .whereEqualTo("courseId", "non_existent_course_id")
+                .get()
+                .await()
         }
     }
 
