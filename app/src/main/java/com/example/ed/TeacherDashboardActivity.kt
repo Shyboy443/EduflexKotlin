@@ -45,6 +45,8 @@ class TeacherDashboardActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        Log.d("TeacherDashboard", "onCreate called, savedInstanceState: ${savedInstanceState != null}")
+        
         // Apply current theme before setting content view
         ThemeManager.applyCurrentTheme(this)
         
@@ -71,6 +73,15 @@ class TeacherDashboardActivity : AppCompatActivity() {
         
         // Ensure consistent fragment state after theme changes
         restoreFragmentState(savedInstanceState)
+        
+        // Additional safety check - ensure dashboard fragment is always loaded after a small delay
+        runOnUiThread {
+            if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
+                Log.w("TeacherDashboard", "No fragment after initialization, forcing dashboard load")
+                switchToFragment(DashboardFragment())
+                bottomNavigation.selectedItemId = R.id.nav_dashboard
+            }
+        }
     }
 
     private fun initializeViews() {
@@ -305,29 +316,48 @@ class TeacherDashboardActivity : AppCompatActivity() {
     }
 
     private fun switchToFragment(fragment: Fragment) {
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragment_container, fragment)
-            .commit()
+        try {
+            Log.d("TeacherDashboard", "Switching to fragment: ${fragment::class.simpleName}")
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commitAllowingStateLoss() // Use commitAllowingStateLoss to handle theme changes
+        } catch (e: Exception) {
+            Log.e("TeacherDashboard", "Error switching fragment: ${e.message}", e)
+            // Try again with a new instance
+            try {
+                supportFragmentManager
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, DashboardFragment())
+                    .commitAllowingStateLoss()
+                bottomNavigation.selectedItemId = R.id.nav_dashboard
+            } catch (e2: Exception) {
+                Log.e("TeacherDashboard", "Critical error switching to dashboard: ${e2.message}", e2)
+            }
+        }
     }
     
     private fun restoreFragmentState(savedInstanceState: Bundle?) {
-        // Ensure consistent fragment loading regardless of theme changes
-        if (savedInstanceState == null) {
-            // First time creation - always load dashboard
-            if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
-                switchToFragment(DashboardFragment())
-                bottomNavigation.selectedItemId = R.id.nav_dashboard
-            }
+        Log.d("TeacherDashboard", "restoreFragmentState called, savedInstanceState: ${savedInstanceState != null}")
+        
+        // Always ensure we have a fragment loaded
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
+        
+        if (currentFragment == null) {
+            // No fragment found - load dashboard
+            Log.d("TeacherDashboard", "No fragment found, loading DashboardFragment")
+            switchToFragment(DashboardFragment())
+            bottomNavigation.selectedItemId = R.id.nav_dashboard
         } else {
-            // Activity recreation (theme change) - maintain current fragment
-            val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-            if (currentFragment == null) {
-                // Fallback to dashboard if no fragment found
-                switchToFragment(DashboardFragment())
-                bottomNavigation.selectedItemId = R.id.nav_dashboard
+            Log.d("TeacherDashboard", "Fragment found: ${currentFragment::class.simpleName}")
+            // Update bottom navigation to match current fragment
+            when (currentFragment) {
+                is DashboardFragment -> bottomNavigation.selectedItemId = R.id.nav_dashboard
+                is CoursesFragment -> bottomNavigation.selectedItemId = R.id.nav_courses
+                is WeeklyContentFragment -> bottomNavigation.selectedItemId = R.id.nav_weekly_content
+                is StudentsFragment -> bottomNavigation.selectedItemId = R.id.nav_students
+                is TeacherSettingsFragment -> bottomNavigation.selectedItemId = R.id.nav_settings
             }
-            // Fragment manager will automatically restore the previous fragment
         }
     }
 

@@ -40,35 +40,62 @@ class DashboardFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d("DashboardFragment", "onCreateView called")
+        
         val view = inflater.inflate(R.layout.fragment_teacher_dashboard, container, false)
         
         // Initialize Firebase
         auth = FirebaseAuth.getInstance()
         db = FirebaseFirestore.getInstance()
         
-        // Initialize UI components
-        initializeViews(view)
-        
-        // Set up click listeners
-        setupClickListeners()
-        
-        // Load dashboard data
-        loadDashboardData()
+        try {
+            // Initialize UI components
+            initializeViews(view)
+            
+            // Set up click listeners
+            setupClickListeners()
+            
+            // Load dashboard data
+            loadDashboardData()
+        } catch (e: Exception) {
+            Log.e("DashboardFragment", "Error in onCreateView: ${e.message}", e)
+        }
         
         return view
     }
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        Log.d("DashboardFragment", "onViewCreated called")
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        Log.d("DashboardFragment", "onResume called")
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        Log.d("DashboardFragment", "onPause called")
+    }
 
     private fun initializeViews(view: View) {
-        tvActiveStudents = view.findViewById(R.id.tv_active_students)
-        tvCourseCompletion = view.findViewById(R.id.tv_course_completion)
-        tvPendingAssignments = view.findViewById(R.id.tv_pending_assignments)
-        tvUpcomingClasses = view.findViewById(R.id.tv_upcoming_classes)
-        tvViewAllTools = view.findViewById(R.id.tv_view_all_tools)
-        tvViewAllCourses = view.findViewById(R.id.tv_view_all_courses)
-        btnGradeAssignments = view.findViewById(R.id.btn_grade_assignments)
-        btnCreateCourse = view.findViewById(R.id.btn_create_course)
-        btnManageCourses = view.findViewById(R.id.btn_manage_courses)
-        btnManageContent = view.findViewById(R.id.btn_manage_content)
+        try {
+            tvActiveStudents = view.findViewById(R.id.tv_active_students)
+            tvCourseCompletion = view.findViewById(R.id.tv_course_completion)
+            tvPendingAssignments = view.findViewById(R.id.tv_pending_assignments)
+            tvUpcomingClasses = view.findViewById(R.id.tv_upcoming_classes)
+            tvViewAllTools = view.findViewById(R.id.tv_view_all_tools)
+            tvViewAllCourses = view.findViewById(R.id.tv_view_all_courses)
+            btnGradeAssignments = view.findViewById(R.id.btn_grade_assignments)
+            btnCreateCourse = view.findViewById(R.id.btn_create_course)
+            btnManageCourses = view.findViewById(R.id.btn_manage_courses)
+            btnManageContent = view.findViewById(R.id.btn_manage_content)
+            
+            Log.d("DashboardFragment", "All views initialized successfully")
+        } catch (e: Exception) {
+            Log.e("DashboardFragment", "Error initializing views: ${e.message}", e)
+        }
     }
 
     private fun setupClickListeners() {
@@ -102,10 +129,6 @@ class DashboardFragment : Fragment() {
             startActivity(intent)
         }
         
-        // Add live lectures button click listener
-        view?.findViewById<LinearLayout>(R.id.btn_live_lectures)?.setOnClickListener {
-            Toast.makeText(context, "Live lectures management feature is not available", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun loadDashboardData() {
