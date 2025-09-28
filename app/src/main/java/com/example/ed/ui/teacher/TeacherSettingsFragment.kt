@@ -26,7 +26,7 @@ import kotlinx.coroutines.tasks.await
 class TeacherSettingsFragment : Fragment() {
 
     private var _binding: FragmentTeacherSettingsBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding
     
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
@@ -47,7 +47,7 @@ class TeacherSettingsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentTeacherSettingsBinding.inflate(inflater, container, false)
-        return binding.root
+        return binding!!.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -66,73 +66,73 @@ class TeacherSettingsFragment : Fragment() {
 
     private fun setupUI() {
         // Show loading state initially
-        binding.progressBarProfile.visibility = View.VISIBLE
-        binding.layoutContent.visibility = View.GONE
+        binding?.progressBarProfile?.visibility = View.VISIBLE
+        binding?.layoutContent?.visibility = View.GONE
     }
 
     private fun setupClickListeners() {
         // Top logout button click
-        binding.btnLogoutTop.setOnClickListener {
+        binding?.btnLogoutTop?.setOnClickListener {
             showSignOutConfirmation()
         }
         
         // Profile picture click
-        binding.ivProfilePicture.setOnClickListener {
+        binding?.ivProfilePicture?.setOnClickListener {
             showProfilePictureOptions()
         }
         
         // Edit profile click
-        binding.btnEditProfile.setOnClickListener {
+        binding?.btnEditProfile?.setOnClickListener {
             showEditProfileDialog()
         }
         
         // Account settings
-        binding.layoutAccountSettings.setOnClickListener {
+        binding?.layoutAccountSettings?.setOnClickListener {
             startActivity(Intent(requireContext(), TeacherSettingsActivity::class.java))
         }
         
         // Notifications
-        binding.layoutNotifications.setOnClickListener {
+        binding?.layoutNotifications?.setOnClickListener {
             showNotificationSettings()
         }
         
         // Privacy
-        binding.layoutPrivacy.setOnClickListener {
+        binding?.layoutPrivacy?.setOnClickListener {
             showPrivacySettings()
         }
         
         // Help & Support
-        binding.layoutHelp.setOnClickListener {
+        binding?.layoutHelp?.setOnClickListener {
             showHelpAndSupport()
         }
         
         // About
-        binding.layoutAbout.setOnClickListener {
+        binding?.layoutAbout?.setOnClickListener {
             showAboutDialog()
         }
         
         // Backup & Sync
-        binding.layoutBackup.setOnClickListener {
+        binding?.layoutBackup?.setOnClickListener {
             showBackupOptions()
         }
         
         // Analytics
-        binding.layoutAnalytics.setOnClickListener {
+        binding?.layoutAnalytics?.setOnClickListener {
             showAnalyticsSettings()
         }
         
         // Sign out
-        binding.layoutSignOut.setOnClickListener {
+        binding?.layoutSignOut?.setOnClickListener {
             showSignOutConfirmation()
         }
     }
 
     private fun setupThemeToggle() {
         // Set current theme state
-        binding.switchDarkMode.isChecked = ThemeManager.isDarkMode(requireContext())
+        binding?.switchDarkMode?.isChecked = ThemeManager.isDarkMode(requireContext())
         
         // Set up theme toggle listener
-        binding.switchDarkMode.setOnCheckedChangeListener { _, isChecked ->
+        binding?.switchDarkMode?.setOnCheckedChangeListener { _, isChecked ->
             val newTheme = if (isChecked) ThemeManager.THEME_DARK else ThemeManager.THEME_LIGHT
             ThemeManager.saveTheme(requireContext(), newTheme)
             ThemeManager.applyTheme(newTheme)
@@ -178,20 +178,20 @@ class TeacherSettingsFragment : Fragment() {
                     "email" to (currentUser.email ?: "")
                 ))
             } finally {
-                binding.progressBarProfile.visibility = View.GONE
-                binding.layoutContent.visibility = View.VISIBLE
+                binding?.progressBarProfile?.visibility = View.GONE
+                binding?.layoutContent?.visibility = View.VISIBLE
             }
         }
     }
 
     private fun updateProfileUI(userData: Map<String, Any>) {
-        binding.tvUserName.text = userData["fullName"]?.toString() ?: "Teacher"
-        binding.tvUserEmail.text = userData["email"]?.toString() ?: ""
-        binding.tvUserRole.text = userData["role"]?.toString() ?: "Teacher"
+        binding?.tvUserName?.text = userData["fullName"]?.toString() ?: "Teacher"
+        binding?.tvUserEmail?.text = userData["email"]?.toString() ?: ""
+        binding?.tvUserRole?.text = userData["role"]?.toString() ?: "Teacher"
         
         // Load profile picture
         val profileImageUrl = userData["profileImageUrl"]?.toString()
-        if (!profileImageUrl.isNullOrEmpty()) {
+        if (!profileImageUrl.isNullOrEmpty() && binding?.ivProfilePicture != null) {
             Glide.with(this)
                 .load(profileImageUrl)
                 .circleCrop()
@@ -199,19 +199,19 @@ class TeacherSettingsFragment : Fragment() {
                 .error(R.drawable.ic_person)
                 .into(binding.ivProfilePicture)
         } else {
-            binding.ivProfilePicture.setImageResource(R.drawable.ic_person)
+            binding?.ivProfilePicture?.setImageResource(R.drawable.ic_person)
         }
         
         // Set additional info
-        binding.tvMemberSince.text = "Member since ${userData["createdAt"]?.let { 
+        binding?.tvMemberSince?.text = "Member since ${userData["createdAt"]?.let { 
             java.text.SimpleDateFormat("MMM yyyy", java.util.Locale.getDefault())
                 .format(java.util.Date(it.toString().toLongOrNull() ?: System.currentTimeMillis()))
         } ?: "Recently"}"
         
         // Set stats
-        binding.tvTotalCourses.text = userData["totalCourses"]?.toString() ?: "0"
-        binding.tvTotalStudents.text = userData["totalStudents"]?.toString() ?: "0"
-        binding.tvAverageRating.text = String.format("%.1f", userData["averageRating"]?.toString()?.toDoubleOrNull() ?: 0.0)
+        binding?.tvTotalCourses?.text = userData["totalCourses"]?.toString() ?: "0"
+        binding?.tvTotalStudents?.text = userData["totalStudents"]?.toString() ?: "0"
+        binding?.tvAverageRating?.text = String.format("%.1f", userData["averageRating"]?.toString()?.toDoubleOrNull() ?: 0.0)
     }
 
     private fun showProfilePictureOptions() {
