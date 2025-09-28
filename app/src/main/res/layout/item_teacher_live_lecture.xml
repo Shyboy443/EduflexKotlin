@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_lecture"
+    style="@style/Widget.MaterialComponents.CardView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:cardUseCompatPadding="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Status Indicator -->
+        <View
+            android:id="@+id/iv_status_indicator"
+            android:layout_width="4dp"
+            android:layout_height="0dp"
+            android:background="@color/status_upcoming"
+            app:layout_constraintBottom_toBottomOf="@id/iv_thumbnail"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/iv_thumbnail" />
+
+        <!-- Thumbnail -->
+        <ImageView
+            android:id="@+id/iv_thumbnail"
+            android:layout_width="100dp"
+            android:layout_height="80dp"
+            android:layout_marginStart="8dp"
+            android:background="@color/cardview_light_background"
+            android:contentDescription="@string/lecture_thumbnail"
+            android:scaleType="centerCrop"
+            app:layout_constraintStart_toEndOf="@id/iv_status_indicator"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:src="@drawable/ic_video_placeholder" />
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/tv_lecture_title"
+            style="@style/TextAppearance.MaterialComponents.Subtitle1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?android:attr/textColorPrimary"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/iv_thumbnail"
+            app:layout_constraintTop_toTopOf="@id/iv_thumbnail"
+            tools:text="Introduction to Android Development" />
+
+        <!-- Course Name -->
+        <TextView
+            android:id="@+id/tv_course_name"
+            style="@style/TextAppearance.MaterialComponents.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintEnd_toEndOf="@id/tv_lecture_title"
+            app:layout_constraintStart_toStartOf="@id/tv_lecture_title"
+            app:layout_constraintTop_toBottomOf="@id/tv_lecture_title"
+            tools:text="Mobile App Development 101" />
+
+        <!-- Date and Time -->
+        <TextView
+            android:id="@+id/tv_lecture_datetime"
+            style="@style/TextAppearance.MaterialComponents.Caption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintEnd_toEndOf="@id/tv_course_name"
+            app:layout_constraintStart_toStartOf="@id/tv_course_name"
+            app:layout_constraintTop_toBottomOf="@id/tv_course_name"
+            tools:text="Jun 15, 2023 • 2:00 PM" />
+
+        <!-- Status Badge -->
+        <TextView
+            android:id="@+id/tv_lecture_status"
+            style="@style/TextAppearance.MaterialComponents.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_status_upcoming"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="2dp"
+            android:textAllCaps="true"
+            android:textColor="@android:color/white"
+            android:textSize="10sp"
+            app:layout_constraintStart_toStartOf="@id/tv_lecture_datetime"
+            app:layout_constraintTop_toBottomOf="@id/tv_lecture_datetime"
+            tools:text="UPCOMING" />
+
+        <!-- Time Until -->
+        <TextView
+            android:id="@+id/tv_time_until"
+            style="@style/TextAppearance.MaterialComponents.Caption"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="?android:attr/textColorSecondary"
+            app:layout_constraintBottom_toBottomOf="@id/tv_lecture_status"
+            app:layout_constraintStart_toEndOf="@id/tv_lecture_status"
+            app:layout_constraintTop_toTopOf="@id/tv_lecture_status"
+            tools:text="in 2 days" />
+
+        <!-- Action Buttons -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_edit"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/edit"
+            android:textColor="?attr/colorPrimary"
+            app:icon="@drawable/ic_edit"
+            app:iconGravity="textStart"
+            app:iconTint="?attr/colorPrimary"
+            app:layout_constraintStart_toStartOf="@id/iv_thumbnail"
+            app:layout_constraintTop_toBottomOf="@id/iv_thumbnail"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_start_lecture"
+            style="@style/Widget.MaterialComponents.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="@string/start_lecture"
+            app:cornerRadius="4dp"
+            app:layout_constraintBottom_toBottomOf="@id/btn_edit"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/btn_edit"
+            app:layout_constraintTop_toTopOf="@id/btn_edit"
+            tools:visibility="visible" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

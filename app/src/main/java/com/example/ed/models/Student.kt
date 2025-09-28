@@ -74,7 +74,7 @@ data class Discussion(
     val content: String = "",
     val authorId: String = "",
     val authorName: String = "",
-    val authorRole: UserRole = UserRole.STUDENT,
+    val authorRole: String = "student",
     val replies: List<DiscussionReply> = emptyList(),
     val upvotes: Int = 0,
     val downvotes: Int = 0,
@@ -91,7 +91,7 @@ data class DiscussionReply(
     val content: String = "",
     val authorId: String = "",
     val authorName: String = "",
-    val authorRole: UserRole = UserRole.STUDENT,
+    val authorRole: String = "student",
     val upvotes: Int = 0,
     val downvotes: Int = 0,
     val isAcceptedAnswer: Boolean = false,
@@ -106,12 +106,6 @@ enum class BadgeCategory {
     PARTICIPATION
 }
 
-enum class UserRole {
-    STUDENT,
-    TEACHER,
-    ADMIN
-}
-
 enum class Permission {
     VIEW_COURSES,
     MANAGE_COURSES,
@@ -123,13 +117,3 @@ enum class Permission {
     SUBMIT_ASSIGNMENTS,
     VIEW_GRADES
 }
-
-data class User(
-    val id: String = "",
-    val name: String = "",
-    val email: String = "",
-    val role: UserRole = UserRole.STUDENT,
-    var isActive: Boolean = true,
-    val createdAt: Long = System.currentTimeMillis(),
-    val lastLoginAt: Long = 0
-)

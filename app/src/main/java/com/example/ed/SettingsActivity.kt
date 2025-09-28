@@ -116,7 +116,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    startActivity(Intent(this, StudentDashboardActivity::class.java))
+                    startActivity(Intent(this, StudentDashboardFragmentActivity::class.java))
                     finish()
                     true
                 }

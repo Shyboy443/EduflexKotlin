@@ -26,7 +26,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Ed">
+        android:theme="@style/Theme.Ed"
+        android:networkSecurityConfig="@xml/network_security_config">
         <!-- Splash Activity - Main Launcher -->
         <activity
             android:name=".SplashActivity"
@@ -50,9 +51,10 @@
         </activity>
         <activity android:name=".SignUpActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".ThemeSelectionActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
-        <activity android:name=".StudentDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".StudentDashboardFragmentActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".TeacherDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".AdminDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".UserManagementActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".AdminSetupActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         
@@ -75,27 +77,37 @@
         <activity android:name=".StudentEngagementActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".MyEnrolledCoursesActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         
-        <!-- Teacher Activities -->
-        <activity android:name=".EnhancedTeacherDashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
-        
         <!-- Assignment and Grading Activities -->
         <activity android:name=".AssignmentListActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".AssignmentCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".GradingSystemActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
-        <activity android:name=".AIQuizGenerationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        
+        <!-- Quiz Activities -->
+        <activity android:name=".activities.QuizCreationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".activities.AddContentItemActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".StudentQuizActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         
         <!-- Material Upload Activities -->
         <activity android:name=".MaterialUploadActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
-        
         <!-- Payment Activities -->
         <activity android:name=".PaymentHistoryActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".PaymentDetailsActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         
         <!-- Other Activities -->
-        <activity android:name=".DashboardActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".NotificationActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
         <activity android:name=".SecurityActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
-        <activity android:name=".DebugUserDataActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+        <activity android:name=".WeeklyContentActivity" android:exported="false" android:theme="@style/Theme.Ed"/>
+
+        <!-- FileProvider for sharing backup files -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_provider_paths" />
+        </provider>
 
     </application>
 

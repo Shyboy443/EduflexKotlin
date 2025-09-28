@@ -1,5 +1,6 @@
 package com.example.ed
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -37,6 +38,9 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Apply current theme before setting content view
+        ThemeManager.applyCurrentTheme(this)
         
         try {
             binding = ActivityLoginBinding.inflate(layoutInflater)
@@ -140,6 +144,14 @@ class LoginActivity : AppCompatActivity() {
         binding.tvSignup.setOnClickListener {
             startActivity(Intent(this, SignUpActivity::class.java))
         }
+        
+        // Add long press to create test users (for development only)
+        binding.tvSignup.setOnLongClickListener {
+            if (BuildConfig.DEBUG) {
+                showCreateTestUsersDialog()
+            }
+            true
+        }
 
         // Google Sign-In button
         binding.btnGoogleSignin.setOnClickListener {
@@ -161,6 +173,11 @@ class LoginActivity : AppCompatActivity() {
             val pass  = binding.etPassword.text?.toString()?.trim().orEmpty()
             if (email.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Email and password required.", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            if (!com.example.ed.utils.NetworkUtils.isNetworkAvailable(this)) {
+                Toast.makeText(this, "No internet connection. Please check your network settings.", Toast.LENGTH_LONG).show()
                 return
             }
 
@@ -217,8 +234,13 @@ class LoginActivity : AppCompatActivity() {
 
     private fun handleAuthenticationError(exception: Exception?) {
         val errorMessage = when {
+            exception is com.google.firebase.FirebaseNetworkException -> {
+                "A network error occurred. Please check your internet connection and try again."
+            }
             exception?.message?.contains("INVALID_LOGIN_CREDENTIALS") == true -> {
-                "Invalid email or password. Please check your credentials and try again.\n\nNote: If you're sure your credentials are correct, this might be due to Firebase App Check configuration. Please contact support."
+                // Check if user exists in Firestore but not in Auth
+                checkUserInFirestore(binding.etEmail.text?.toString()?.trim() ?: "")
+                "Invalid email or password. The user may not exist in Firebase Auth.\n\nPlease use the 'Reset Password' option or Sign Up to create your account."
             }
             exception?.message?.contains("USER_NOT_FOUND") == true -> {
                 "No account found with this email address. Please sign up first."
@@ -283,13 +305,120 @@ class LoginActivity : AppCompatActivity() {
             }
     }
 
+    private fun showCreateTestUsersDialog() {
+        val options = arrayOf("Admin", "Teacher", "Student", "Create All Test Users")
+        
+        AlertDialog.Builder(this)
+            .setTitle("Create Test Users")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> createTestUser("admin@gmail.com", "admin123", "Admin", "Admin User")
+                    1 -> createTestUser("teacher@gmail.com", "teacher123", "Teacher", "Teacher User")
+                    2 -> createTestUser("student@gmail.com", "student123", "Student", "Student User")
+                    3 -> createAllTestUsers()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun createAllTestUsers() {
+        // Create all three test users
+        createTestUser("admin@gmail.com", "admin123", "Admin", "Admin User")
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            createTestUser("teacher@gmail.com", "teacher123", "Teacher", "Teacher User")
+        }, 1000)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            createTestUser("student@gmail.com", "student123", "Student", "Student User")
+        }, 2000)
+    }
+    
+    private fun createTestUser(email: String, password: String, role: String, fullName: String) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .addOnSuccessListener { authResult ->
+                val user = authResult.user
+                if (user != null) {
+                    // Also update Firestore
+                    val userData = hashMapOf(
+                        "email" to email,
+                        "fullName" to fullName,
+                        "role" to role,
+                        "uid" to user.uid,
+                        "provider" to "email",
+                        "createdAt" to System.currentTimeMillis(),
+                        "profileCompleted" to true,
+                        "isActive" to true
+                    )
+                    
+                    db.collection("users").document(user.uid)
+                        .set(userData)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "$role user created successfully!\nEmail: $email\nPassword: $password", Toast.LENGTH_LONG).show()
+                            android.util.Log.d("LoginActivity", "Test user created: $email with role: $role")
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "User created but Firestore update failed: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                }
+            }
+            .addOnFailureListener { e ->
+                if (e.message?.contains("already in use") == true) {
+                    // User exists, try to sign in instead
+                    Toast.makeText(this, "User already exists. Try logging in with:\nEmail: $email\nPassword: $password", Toast.LENGTH_LONG).show()
+                    android.util.Log.d("LoginActivity", "User already exists: $email")
+                } else {
+                    Toast.makeText(this, "Failed to create user: ${e.message}", Toast.LENGTH_LONG).show()
+                    android.util.Log.e("LoginActivity", "Failed to create user: $email", e)
+                }
+            }
+    }
+
+    private fun checkUserInFirestore(email: String) {
+        db.collection("users")
+            .whereEqualTo("email", email)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val userDoc = documents.first()
+                    val role = userDoc.getString("role") ?: "Unknown"
+                    val fullName = userDoc.getString("fullName") ?: "User"
+                    
+                    android.util.Log.d("LoginActivity", "User found in Firestore: $fullName ($role)")
+                    android.util.Log.d("LoginActivity", "But user NOT found in Firebase Auth!")
+                    
+                    // Show dialog to help user
+                    AlertDialog.Builder(this)
+                        .setTitle("Account Migration Needed")
+                        .setMessage("Your account exists in our database but needs to be activated in the authentication system.\n\nUser: $fullName\nRole: $role\n\nWould you like to:\n1. Reset your password (recommended)\n2. Create a new account with this email")
+                        .setPositiveButton("Reset Password") { _, _ ->
+                            auth.sendPasswordResetEmail(email).addOnCompleteListener {
+                                Toast.makeText(this,
+                                    if (it.isSuccessful) "Password reset email sent to $email" 
+                                    else "Failed to send reset email: ${it.exception?.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                        .setNegativeButton("Sign Up") { _, _ ->
+                            startActivity(Intent(this, SignUpActivity::class.java))
+                        }
+                        .show()
+                } else {
+                    android.util.Log.d("LoginActivity", "User NOT found in Firestore either")
+                }
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.e("LoginActivity", "Error checking Firestore: ${e.message}")
+            }
+    }
+
     private fun navigateToRoleDashboard(role: String) {
         try {
             val intent = when (role) {
-                "Student" -> Intent(this, StudentDashboardActivity::class.java)
+                "Student" -> Intent(this, StudentDashboardFragmentActivity::class.java)
                 "Teacher" -> Intent(this, TeacherDashboardActivity::class.java)
                 "Admin" -> Intent(this, AdminDashboardActivity::class.java)
-                else -> Intent(this, StudentDashboardActivity::class.java) // Default to student
+                else -> Intent(this, StudentDashboardFragmentActivity::class.java) // Default to student
             }
             
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

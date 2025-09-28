@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="150dp"
+    android:viewportWidth="200"
+    android:viewportHeight="150">
+    
+    <!-- Background -->
+    <path
+        android:fillColor="#F5F5F5"
+        android:pathData="M0,0h200v150h-200z" />
+    
+    <!-- Book icon -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M70,50h60c2.2,0 4,1.8 4,4v42c0,2.2 -1.8,4 -4,4h-60c-2.2,0 -4,-1.8 -4,-4v-42c0,-2.2 1.8,-4 4,-4z" />
+    
+    <!-- Book pages -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M74,54h52v34h-52z" />
+    
+    <!-- Book spine -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M70,50v50h8v-50z" />
+    
+    <!-- Text lines -->
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M80,62h40v2h-40z" />
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M80,68h36v2h-36z" />
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M80,74h42v2h-42z" />
+    <path
+        android:fillColor="#9E9E9E"
+        android:pathData="M80,80h38v2h-38z" />
+    
+    <!-- Play button overlay to indicate it's a course (circle using path) -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M100,98 A12,12 0 1,1 100,122 A12,12 0 1,1 100,98 Z" />
+    
+    <!-- Play triangle -->
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M96,106l8,4l-8,4z" />
+        
+</vector>

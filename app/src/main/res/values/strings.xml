@@ -55,6 +55,22 @@
     <string name="nav_downloads">Downloads</string>
     <string name="nav_profile">Profile</string>
     
+    <!-- Live Lectures -->
+    <string name="lecture_thumbnail">Lecture thumbnail</string>
+    <string name="edit">Edit</string>
+    <string name="start_lecture">Start Lecture</string>
+    <string name="join_lecture">Join Lecture</string>
+    <string name="view_recording">View Recording</string>
+    <string name="status_live">LIVE</string>
+    <string name="status_upcoming">UPCOMING</string>
+    <string name="status_ended">ENDED</string>
+    <string name="no_course">No Course</string>
+    <string name="not_scheduled">Not scheduled</string>
+    <string name="starting_soon">Starting soon</string>
+    <string name="in_progress">In progress</string>
+    <string name="no_recording_available">No recording available</string>
+    <string name="lecture_details">Lecture Details</string>
+    
     <!-- Firebase Google Sign-In -->
     <!-- default_web_client_id is automatically generated from google-services.json -->
 

@@ -192,6 +192,16 @@
                     app:cornerRadius="6dp" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_enroll"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:text="Enroll"
+                android:textSize="12sp"
+                android:backgroundTint="@color/primary_color"
+                android:textColor="@android:color/white"
+                app:cornerRadius="6dp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_view"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"

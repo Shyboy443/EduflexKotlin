@@ -33,6 +33,71 @@ object FirebaseDataSeeder {
         "Computer Science", "Physics", "Chemistry", "Biology", "Art"
     )
     
+    // Course image URLs mapped by category
+    private val courseImageUrls = mapOf(
+        "Mathematics" to listOf(
+            "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1453733190371-0a9bedd82893?w=400&h=300&fit=crop"
+        ),
+        "Science" to listOf(
+            "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1554475901-4538ddfbccc2?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=400&h=300&fit=crop"
+        ),
+        "English" to listOf(
+            "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop"
+        ),
+        "History" to listOf(
+            "https://images.unsplash.com/photo-1461360370896-922624d12aa1?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1520637836862-4d197d17c93a?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=400&h=300&fit=crop"
+        ),
+        "Geography" to listOf(
+            "https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1564053489984-317bbd824340?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1502780402662-acc01917949e?w=400&h=300&fit=crop"
+        ),
+        "Computer Science" to listOf(
+            "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=400&h=300&fit=crop"
+        ),
+        "Physics" to listOf(
+            "https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1614935151651-0bea6508db6b?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=400&h=300&fit=crop"
+        ),
+        "Chemistry" to listOf(
+            "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1554475901-4538ddfbccc2?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1628595351029-c2bf17511435?w=400&h=300&fit=crop"
+        ),
+        "Biology" to listOf(
+            "https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=300&fit=crop"
+        ),
+        "Art" to listOf(
+            "https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+            "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=300&fit=crop"
+        )
+    )
+    
     private val courseTitles = mapOf(
         "Mathematics" to listOf("Algebra Fundamentals", "Calculus I", "Statistics", "Geometry", "Trigonometry"),
         "Science" to listOf("General Science", "Environmental Science", "Earth Science", "Space Science"),
@@ -237,9 +302,17 @@ object FirebaseDataSeeder {
         var count = 0
         
         courseTitles.forEach { (category, titles) ->
-            titles.forEach { title ->
+            titles.forEachIndexed { index, title ->
                 val courseId = "course_${System.currentTimeMillis()}_${count}"
                 val teacherId = "teacher_${System.currentTimeMillis()}_${Random.nextInt(0, teacherNames.size)}"
+                
+                // Get appropriate image URL for this category
+                val categoryImages = courseImageUrls[category] ?: emptyList()
+                val thumbnailUrl = if (categoryImages.isNotEmpty()) {
+                    categoryImages[index % categoryImages.size]
+                } else {
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop"
+                }
                 
                 val course = mapOf(
                     "id" to courseId,
@@ -265,8 +338,8 @@ object FirebaseDataSeeder {
                         "Apply theoretical knowledge to practical problems",
                         "Develop critical thinking skills in $category"
                     ),
-                    "thumbnailUrl" to "",
-                    "videoUrl" to "",
+                    "thumbnailUrl" to thumbnailUrl,
+                    "videoUrl" to "https://www.youtube.com/watch?v=dQw4w9WgXcQ", // Sample video URL
                     "syllabus" to mapOf(
                         "week1" to "Introduction and Fundamentals",
                         "week2" to "Core Concepts",
@@ -483,29 +556,65 @@ object FirebaseDataSeeder {
      */
     suspend fun clearSampleData(): SeedResult {
         return try {
+            Log.d(TAG, "Starting clearSampleData operation...")
+            Log.d(TAG, "Firebase project: ${firestore.app.options.projectId}")
+            Log.d(TAG, "Firestore app name: ${firestore.app.name}")
+            
             val collections = listOf("users", "courses", "enrollments", "assignments", "analytics", "materials")
             val results = mutableListOf<String>()
             var totalDeleted = 0
             
             collections.forEach { collectionName ->
+                Log.d(TAG, "Processing collection: $collectionName")
                 val documents = firestore.collection(collectionName).get().await()
+                Log.d(TAG, "Found ${documents.size()} documents in $collectionName")
+                
                 var batch = firestore.batch()
                 var batchCount = 0
                 
                 documents.documents.forEach { doc ->
-                    // Only delete documents that appear to be sample data
                     val docId = doc.id
+                    var shouldDelete = false
+                    var reason = ""
+                    
+                    // Check if document appears to be sample data based on ID patterns or content
                     if (docId.contains("teacher_") || docId.contains("student_") || 
                         docId.contains("course_") || docId.contains("enrollment_") ||
                         docId.contains("assignment_") || docId.contains("analytics_") ||
                         docId.contains("material_")) {
-                        
+                        shouldDelete = true
+                        reason = "ID pattern match"
+                    } else {
+                        // For courses collection, also check if instructor name matches sample data
+                        if (collectionName == "courses") {
+                            val instructor = doc.getString("instructor") ?: doc.getString("teacherName")
+                            Log.d(TAG, "Course $docId has instructor: '$instructor'")
+                            if (!instructor.isNullOrEmpty() && teacherNames.contains(instructor)) {
+                                shouldDelete = true
+                                reason = "Sample instructor name: $instructor"
+                            }
+                        }
+                        // For users collection, check if name matches sample data
+                        else if (collectionName == "users") {
+                            val fullName = doc.getString("fullName") ?: doc.getString("name")
+                            Log.d(TAG, "User $docId has name: '$fullName'")
+                            if (!fullName.isNullOrEmpty() && 
+                                (teacherNames.contains(fullName) || studentNames.contains(fullName))) {
+                                shouldDelete = true
+                                reason = "Sample user name: $fullName"
+                            }
+                        }
+                    }
+                    
+                    if (shouldDelete) {
+                        Log.d(TAG, "Marking for deletion: $docId ($reason)")
                         batch.delete(doc.reference)
                         batchCount++
                         totalDeleted++
                         
                         // Firestore batch limit is 500 operations
                         if (batchCount >= 450) {
+                            Log.d(TAG, "Committing batch of $batchCount deletions")
                             batch.commit().await()
                             batch = firestore.batch()
                             batchCount = 0
@@ -514,10 +623,12 @@ object FirebaseDataSeeder {
                 }
                 
                 if (batchCount > 0) {
+                    Log.d(TAG, "Committing final batch of $batchCount deletions for $collectionName")
                     batch.commit().await()
                 }
                 
                 results.add("✅ Cleared $batchCount documents from $collectionName")
+                Log.d(TAG, "Completed $collectionName: deleted $batchCount documents")
             }
             
             SeedResult(
@@ -533,6 +644,145 @@ object FirebaseDataSeeder {
                 success = false,
                 totalRecords = 0,
                 details = listOf("❌ Clear operation failed: ${e.message}"),
+                timestamp = System.currentTimeMillis()
+            )
+        }
+    }
+    
+    /**
+     * Clears ALL data from specified collections (use with extreme caution!)
+     * This is for complete database reset during development
+     */
+    suspend fun clearAllData(): SeedResult {
+        return try {
+            Log.d(TAG, "Starting clearAllData operation...")
+            Log.d(TAG, "Firebase project: ${firestore.app.options.projectId}")
+            Log.d(TAG, "Firestore app name: ${firestore.app.name}")
+            
+            val collections = listOf("courses", "enrollments", "assignments", "analytics", "materials")
+            val results = mutableListOf<String>()
+            var totalDeleted = 0
+            
+            collections.forEach { collectionName ->
+                Log.d(TAG, "Processing collection: $collectionName")
+                val documents = firestore.collection(collectionName).get().await()
+                Log.d(TAG, "Found ${documents.size()} documents in $collectionName")
+                
+                var batch = firestore.batch()
+                var batchCount = 0
+                
+                documents.documents.forEach { doc ->
+                    Log.d(TAG, "Deleting document: ${doc.id}")
+                    batch.delete(doc.reference)
+                    batchCount++
+                    totalDeleted++
+                    
+                    // Firestore batch limit is 500 operations
+                    if (batchCount >= 450) {
+                        Log.d(TAG, "Committing batch of $batchCount deletions")
+                        batch.commit().await()
+                        batch = firestore.batch()
+                        batchCount = 0
+                    }
+                }
+                
+                if (batchCount > 0) {
+                    Log.d(TAG, "Committing final batch of $batchCount deletions for $collectionName")
+                    batch.commit().await()
+                }
+                
+                results.add("✅ Cleared ALL $batchCount documents from $collectionName")
+                Log.d(TAG, "Completed $collectionName: deleted $batchCount documents")
+            }
+            
+            SeedResult(
+                success = true,
+                totalRecords = totalDeleted,
+                details = results,
+                timestamp = System.currentTimeMillis()
+            )
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to clear all data", e)
+            SeedResult(
+                success = false,
+                totalRecords = 0,
+                details = listOf("❌ Clear all operation failed: ${e.message}"),
+                timestamp = System.currentTimeMillis()
+            )
+        }
+    }
+    
+    /**
+     * Debug function to check database connectivity and show current data
+     */
+    suspend fun debugDatabaseStatus(): SeedResult {
+        return try {
+            Log.d(TAG, "=== DATABASE DEBUG STATUS ===")
+            Log.d(TAG, "Firebase project: ${firestore.app.options.projectId}")
+            Log.d(TAG, "Firestore app name: ${firestore.app.name}")
+            
+            val collections = listOf("users", "courses", "enrollments", "assignments", "analytics", "materials")
+            val results = mutableListOf<String>()
+            var totalDocuments = 0
+            
+            collections.forEach { collectionName ->
+                try {
+                    val documents = firestore.collection(collectionName).get().await()
+                    val count = documents.size()
+                    totalDocuments += count
+                    
+                    Log.d(TAG, "Collection '$collectionName': $count documents")
+                    results.add("📊 $collectionName: $count documents")
+                    
+                    // Show first few document IDs and some sample data
+                    documents.documents.take(3).forEach { doc ->
+                        val docId = doc.id
+                        when (collectionName) {
+                            "courses" -> {
+                                val title = doc.getString("title") ?: "No title"
+                                val instructor = doc.getString("instructor") ?: doc.getString("teacherName") ?: "No instructor"
+                                Log.d(TAG, "  Course $docId: '$title' by '$instructor'")
+                                results.add("    📚 $docId: '$title' by '$instructor'")
+                            }
+                            "users" -> {
+                                val name = doc.getString("fullName") ?: doc.getString("name") ?: "No name"
+                                val role = doc.getString("role") ?: "No role"
+                                Log.d(TAG, "  User $docId: '$name' ($role)")
+                                results.add("    👤 $docId: '$name' ($role)")
+                            }
+                            else -> {
+                                Log.d(TAG, "  Document $docId")
+                                results.add("    📄 $docId")
+                            }
+                        }
+                    }
+                    
+                    if (documents.size() > 3) {
+                        results.add("    ... and ${documents.size() - 3} more")
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error accessing collection $collectionName", e)
+                    results.add("❌ Error accessing $collectionName: ${e.message}")
+                }
+            }
+            
+            Log.d(TAG, "=== END DATABASE DEBUG ===")
+            
+            SeedResult(
+                success = true,
+                totalRecords = totalDocuments,
+                details = results,
+                timestamp = System.currentTimeMillis()
+            )
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Database debug failed", e)
+            SeedResult(
+                success = false,
+                totalRecords = 0,
+                details = listOf("❌ Database debug failed: ${e.message}"),
                 timestamp = System.currentTimeMillis()
             )
         }

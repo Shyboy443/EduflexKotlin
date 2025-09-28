@@ -371,8 +371,8 @@ class SignUpActivity : AppCompatActivity() {
         
         try {
             // Since only students can register through signup, always navigate to student dashboard
-            val intent = Intent(this, StudentDashboardActivity::class.java)
-            android.util.Log.d("SignUpActivity", "Creating intent for StudentDashboardActivity")
+            val intent = Intent(this, StudentDashboardFragmentActivity::class.java)
+            android.util.Log.d("SignUpActivity", "Creating intent for StudentDashboardFragmentActivity")
             
             android.util.Log.d("SignUpActivity", "Starting activity and clearing task stack")
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

@@ -3,7 +3,7 @@ package com.example.ed.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.ed.R
@@ -14,8 +14,8 @@ class LearningObjectiveAdapter(
 ) : RecyclerView.Adapter<LearningObjectiveAdapter.ObjectiveViewHolder>() {
 
     class ObjectiveViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val objectiveTextView: TextView = itemView.findViewById(R.id.tv_objective_text)
-        val deleteButton: Button = itemView.findViewById(R.id.btn_delete_objective)
+        val objectiveTextView: TextView = itemView.findViewById(R.id.tvObjective)
+        val deleteButton: ImageButton = itemView.findViewById(R.id.btnRemove)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ObjectiveViewHolder {

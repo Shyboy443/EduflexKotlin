@@ -8,14 +8,18 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.ed.R
+import com.example.ed.services.ImageUploadService
+import kotlinx.coroutines.launch
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
@@ -92,6 +96,10 @@ class TeacherCourseUploadActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Apply current theme
+        ThemeManager.applyCurrentTheme(this)
+        
         setContentView(R.layout.activity_teacher_course_upload)
 
         // Initialize Firebase
@@ -395,19 +403,27 @@ class TeacherCourseUploadActivity : AppCompatActivity() {
 
     private fun uploadThumbnail(onComplete: (String?) -> Unit) {
         selectedThumbnailUri?.let { uri ->
-            val fileName = "course_thumbnails/${UUID.randomUUID()}.jpg"
-            val storageRef = storage.reference.child(fileName)
-            
-            storageRef.putFile(uri)
-                .addOnSuccessListener { taskSnapshot ->
-                    storageRef.downloadUrl.addOnSuccessListener { downloadUri ->
-                        onComplete(downloadUri.toString())
+            lifecycleScope.launch {
+                try {
+                    val imageUploadService = ImageUploadService.getInstance()
+                    val result = imageUploadService.uploadImage(
+                        context = this@TeacherCourseUploadActivity,
+                        imageUri = uri,
+                        uploaderId = auth.currentUser?.uid ?: "unknown"
+                    )
+                    
+                    if (result.success && result.imageUrl != null) {
+                        Toast.makeText(this@TeacherCourseUploadActivity, "✅ Thumbnail saved locally!", Toast.LENGTH_SHORT).show()
+                        onComplete(result.imageUrl)
+                    } else {
+                        Toast.makeText(this@TeacherCourseUploadActivity, "⚠️ Failed to save thumbnail: ${result.error}", Toast.LENGTH_SHORT).show()
+                        onComplete(null)
                     }
-                }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Failed to upload thumbnail", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this@TeacherCourseUploadActivity, "❌ Error saving thumbnail: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                     onComplete(null)
                 }
+            }
         } ?: onComplete(null)
     }
 

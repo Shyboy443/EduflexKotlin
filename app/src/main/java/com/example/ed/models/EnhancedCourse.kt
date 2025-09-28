@@ -1,5 +1,7 @@
 package com.example.ed.models
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.util.*
 
 data class EnhancedCourse(
@@ -68,7 +70,7 @@ data class EnhancedLesson(
     val moduleId: String = "",
     val title: String = "",
     val description: String = "",
-    val content: LessonContent = LessonContent(),
+    val content: EnhancedLessonContent = EnhancedLessonContent(),
     val type: LessonType = LessonType.VIDEO,
     val order: Int = 0,
     val duration: Long = 0, // in milliseconds
@@ -87,7 +89,7 @@ data class EnhancedLesson(
     val updatedAt: Long = System.currentTimeMillis()
 )
 
-data class LessonContent(
+data class EnhancedLessonContent(
     val videoUrl: String = "",
     val audioUrl: String = "",
     val textContent: String = "",
@@ -98,6 +100,7 @@ data class LessonContent(
     val downloadableFiles: List<DownloadableFile> = emptyList()
 )
 
+@Parcelize
 data class InteractiveElement(
     val id: String = "",
     val type: InteractionType = InteractionType.QUIZ,
@@ -107,18 +110,9 @@ data class InteractiveElement(
     val correctAnswer: String = "",
     val feedback: String = "",
     val points: Int = 0
-)
+) : Parcelable
 
-data class LessonResource(
-    val id: String = "",
-    val title: String = "",
-    val description: String = "",
-    val type: ResourceType = ResourceType.DOCUMENT,
-    val url: String = "",
-    val fileSize: Long = 0,
-    val downloadable: Boolean = true,
-    val createdAt: Long = System.currentTimeMillis()
-)
+// LessonResource moved to LessonContent.kt to avoid duplication
 
 data class Assignment(
     val id: String = "",
@@ -237,16 +231,7 @@ enum class InteractionType {
     HIGHLIGHT
 }
 
-enum class ResourceType {
-    DOCUMENT,
-    VIDEO,
-    AUDIO,
-    IMAGE,
-    PRESENTATION,
-    SPREADSHEET,
-    ARCHIVE,
-    LINK
-}
+// ResourceType moved to LessonContent.kt to avoid duplication
 
 enum class AssignmentType {
     ESSAY,
@@ -255,7 +240,10 @@ enum class AssignmentType {
     PEER_REVIEW,
     PROJECT,
     PRESENTATION,
-    CODE_SUBMISSION
+    CODE_SUBMISSION,
+    RESEARCH,
+    PRACTICAL,
+    OTHER
 }
 
 enum class SubmissionFormat {
@@ -264,7 +252,10 @@ enum class SubmissionFormat {
     VIDEO,
     AUDIO,
     LINK,
-    CODE
+    CODE,
+    PDF,
+    DOCUMENT,
+    IMAGE
 }
 
 enum class UnlockType {

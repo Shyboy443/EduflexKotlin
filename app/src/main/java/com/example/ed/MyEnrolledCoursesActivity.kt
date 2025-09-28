@@ -76,19 +76,15 @@ class MyEnrolledCoursesActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         coursesAdapter = CourseAdapter(
             courses = enrolledCourses,
-            onCourseClick = { course ->
-                // Navigate to course content
+            enrolledCourses = emptyList(), // No need to check enrollment for enrolled courses
+            onCourseClick = { course -> 
+                // Navigate to course details or continue learning
                 val intent = Intent(this, CourseDetailsActivity::class.java)
                 intent.putExtra("courseId", course.id)
                 startActivity(intent)
             },
-            onEditClick = { course: Course ->
-                // Students can't edit courses, so this is disabled
-            },
-            onMenuClick = { course: Course, view ->
-                // Show options like remove from favorites, etc.
-                showCourseOptions(course, view)
-            }
+            showAsEnrolled = true, // Show "View" button for enrolled courses
+            isTeacherView = false // Student view
         )
         
         rvEnrolledCourses.layoutManager = GridLayoutManager(this, 2)
@@ -144,10 +140,11 @@ class MyEnrolledCoursesActivity : AppCompatActivity() {
         firestore.collection("payments")
             .whereEqualTo("userId", currentUser.uid)
             .whereEqualTo("status", "completed")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { paymentDocuments ->
+                // Sort payment documents by timestamp (newest first) then extract course IDs
                 val courseIds = paymentDocuments.documents
+                    .sortedByDescending { it.getLong("timestamp") ?: 0L }
                     .mapNotNull { it.getString("courseId") }
                     .distinct()
                 

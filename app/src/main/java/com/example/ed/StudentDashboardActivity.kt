@@ -19,6 +19,12 @@ import com.example.ed.utils.FirebaseDataSeeder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.tasks.await
 
 class StudentDashboardActivity : AppCompatActivity() {
     
@@ -26,6 +32,11 @@ class StudentDashboardActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
     private lateinit var databaseService: DatabaseService
+    
+    // Coroutine jobs for lifecycle management
+    private var analyticsJob: Job? = null
+    private var enrolledCoursesJob: Job? = null
+    private var popularCoursesJob: Job? = null
     
     // Student dashboard metrics
     private var enrolledCourses = 0
@@ -63,6 +74,7 @@ class StudentDashboardActivity : AppCompatActivity() {
         loadStudentAnalytics()
         loadEnrolledCourses()
         loadPopularCourses()
+        checkForLiveLectures()
         setupClickListeners()
     }
 
@@ -78,17 +90,18 @@ class StudentDashboardActivity : AppCompatActivity() {
         // Setup Continue Learning RecyclerView
         continueCoursesAdapter = CourseAdapter(
             courses = continueCourses,
+            enrolledCourses = emptyList(), // No need to pass enrolled courses for filtering in enrolled view
             onCourseClick = { course ->
                 val intent = Intent(this, CourseDetailsActivity::class.java)
                 intent.putExtra("COURSE_ID", course.id)
                 startActivity(intent)
             },
-            onEditClick = { course -> 
-                // Students can't edit courses
-            },
+            onEditClick = null, // Hide edit for students
             onMenuClick = { course, view ->
-                // Show course options
-            }
+                // Show enrolled course options (unenroll, progress, etc.)
+            },
+            showAsEnrolled = true, // Show as enrolled courses with View button
+            isTeacherView = false // Student view
         )
         
         binding.rvContinueCourses.apply {
@@ -99,17 +112,18 @@ class StudentDashboardActivity : AppCompatActivity() {
         // Setup Popular Courses RecyclerView
         popularCoursesAdapter = CourseAdapter(
             courses = popularCourses,
+            enrolledCourses = continueCourses, // Pass enrolled courses for filtering
             onCourseClick = { course ->
-                val intent = Intent(this, CourseDetailsActivity::class.java)
-                intent.putExtra("COURSE_ID", course.id)
-                startActivity(intent)
+                // Show course details with enrollment option
+                showCourseEnrollmentDialog(course)
             },
-            onEditClick = { course -> 
-                // Students can't edit courses
-            },
+            onEditClick = null, // Hide edit for students
             onMenuClick = { course, view ->
-                // Show course options
-            }
+                // Show course options (enroll, preview, etc.)
+                showCourseOptionsMenu(course, view)
+            },
+            showAsEnrolled = false, // Show as available courses with Enroll button
+            isTeacherView = false // Student view
         )
         
         binding.rvPopularCourses.apply {
@@ -123,12 +137,18 @@ class StudentDashboardActivity : AppCompatActivity() {
         
         try {
             // Load user profile image with better error handling
-            Glide.with(this)
-                .load(currentUser.photoUrl)
-                .placeholder(R.drawable.ic_person) // Use a simpler placeholder
-                .error(R.drawable.ic_person) // Fallback if loading fails
-                .circleCrop()
-                .into(binding.ivProfilePicture)
+            val uri = currentUser.photoUrl
+            if (uri != null) {
+                Glide.with(this)
+                    .load(uri)
+                    .placeholder(R.drawable.ic_person) // Use a simpler placeholder
+                    .error(R.drawable.ic_person) // Fallback if loading fails
+                    .circleCrop()
+                    .into(binding.ivProfilePicture)
+            } else {
+                // Avoid calling Glide with a null model
+                binding.ivProfilePicture.setImageResource(R.drawable.ic_person)
+            }
         } catch (e: Exception) {
             Log.e("StudentDashboard", "Error loading profile image", e)
             // Set a default drawable directly if Glide fails
@@ -296,84 +316,180 @@ class StudentDashboardActivity : AppCompatActivity() {
     private fun loadEnrolledCourses() {
         val currentUser = auth.currentUser ?: return
         
-        lifecycleScope.launch {
+        enrolledCoursesJob?.cancel()
+        
+        binding.progressBar.visibility = View.VISIBLE
+        binding.cardEmptyStateContinue.visibility = View.GONE
+        
+        enrolledCoursesJob = lifecycleScope.launch {
             try {
+                if (!isActive) return@launch
+                
                 databaseService.getEnrolledCoursesRealTime(currentUser.uid)
                     .collect { courses ->
-                        continueCourses.clear()
-                        continueCourses.addAll(courses.take(5)) // Show only 5 most recent
-                        continueCoursesAdapter.notifyDataSetChanged()
+                        if (!isActive) return@collect
                         
-                        // Update enrolled courses count
-                        enrolledCourses = courses.size
-                        // Analytics will be updated by loadAnalyticsData()
+                        Log.d("StudentDashboard", "Received ${courses.size} enrolled courses")
                         
-                        // Hide loading indicator
-                        binding.progressBar.visibility = View.GONE
-                        
-                        // Show/hide empty state
                         if (courses.isEmpty()) {
-                            binding.tvEmptyStateContinue.visibility = View.VISIBLE
-                            binding.tvEmptyStateContinue.text = "No enrolled courses yet. Browse our course catalog to get started!"
-                        } else {
-                            binding.tvEmptyStateContinue.visibility = View.GONE
+                            runOnUiThread {
+                                binding.cardEmptyStateContinue.visibility = View.VISIBLE
+                                binding.progressBar.visibility = View.GONE
+                                continueCourses.clear()
+                                continueCoursesAdapter.notifyDataSetChanged()
+                            }
+                            return@collect
+                        }
+
+                        val publishedCourses = courses.filter { it.isPublished }
+                        val sortedCourses = publishedCourses.sortedByDescending { it.updatedAt }
+                        
+                        runOnUiThread {
+                            try {
+                                continueCourses.clear()
+                                continueCourses.addAll(sortedCourses.take(5))
+                                continueCoursesAdapter.notifyDataSetChanged()
+                                
+                                enrolledCourses = publishedCourses.size
+                                
+                                updateAnalyticsUI(
+                                    enrolledCourses,
+                                    completedCourses,
+                                    averageGrade,
+                                    studyStreak,
+                                    pendingAssignments
+                                )
+                                
+                                if (publishedCourses.isEmpty()) {
+                                    binding.cardEmptyStateContinue.visibility = View.VISIBLE
+                                } else {
+                                    binding.cardEmptyStateContinue.visibility = View.GONE
+                                }
+                                
+                                Log.d("StudentDashboard", "Successfully loaded ${publishedCourses.size} courses")
+                            } catch (e: Exception) {
+                                Log.e("StudentDashboard", "Error updating UI with courses", e)
+                                showErrorMessage("Error updating course list")
+                            } finally {
+                                binding.progressBar.visibility = View.GONE
+                            }
                         }
                     }
+            } catch (e: CancellationException) {
+                Log.d("StudentDashboard", "Enrolled courses loading cancelled")
             } catch (e: Exception) {
                 Log.e("StudentDashboard", "Error loading enrolled courses", e)
-                binding.progressBar.visibility = View.GONE
-                Toast.makeText(this@StudentDashboardActivity, "Error loading courses", Toast.LENGTH_SHORT).show()
+                runOnUiThread {
+                    try {
+                        binding.progressBar.visibility = View.GONE
+                        binding.cardEmptyStateContinue.visibility = View.VISIBLE
+                        
+                        
+                        Log.e("StudentDashboard", "Failed to load enrolled courses: ${e.message}", e)
+                    } catch (uiError: Exception) {
+                        Log.e("StudentDashboard", "Error in error handling", uiError)
+                    }
+                }
             }
         }
     }
 
     private fun loadPopularCourses() {
-        lifecycleScope.launch {
+        popularCoursesJob?.cancel()
+        
+        binding.progressBarPopular.visibility = View.VISIBLE
+        binding.cardEmptyStatePopular.visibility = View.GONE
+        
+        popularCoursesJob = lifecycleScope.launch {
             try {
+                if (!isActive) return@launch
+                
                 databaseService.getCoursesRealTime()
                     .collect { enhancedCourses ->
-                        // Convert EnhancedCourse to Course and filter published courses
-                        val courses = enhancedCourses
-                            .filter { it.settings.isPublished }
-                            .sortedByDescending { it.enrollmentInfo.totalEnrolled }
-                            .take(6) // Show top 6 popular courses
-                            .map { enhancedCourse ->
-                                Course(
-                                    id = enhancedCourse.id,
-                                    title = enhancedCourse.title,
-                                    instructor = enhancedCourse.instructor.name,
-                                    description = enhancedCourse.description,
-                                    category = enhancedCourse.category.name,
-                                    difficulty = enhancedCourse.difficulty.name.lowercase().replaceFirstChar { it.uppercase() },
-                                    duration = "${enhancedCourse.courseStructure.totalDuration / 3600000}h", // Convert ms to hours
-                                    thumbnailUrl = enhancedCourse.thumbnailUrl,
-                                    isPublished = enhancedCourse.settings.isPublished,
-                                    createdAt = enhancedCourse.createdAt,
-                                    updatedAt = enhancedCourse.updatedAt,
-                                    enrolledStudents = enhancedCourse.enrollmentInfo.totalEnrolled,
-                                    rating = enhancedCourse.enrollmentInfo.averageRating,
-                                    teacherId = enhancedCourse.instructor.id,
-                                    price = enhancedCourse.pricing.price,
-                                    totalLessons = enhancedCourse.courseStructure.totalLessons,
-                                    isFree = enhancedCourse.pricing.isFree
-                                )
+                        if (!isActive) return@collect
+                        
+                        Log.d("StudentDashboard", "Received ${enhancedCourses.size} courses for popular section")
+
+                        if (enhancedCourses.isEmpty()) {
+                            Log.d("StudentDashboard", "No popular courses to process.")
+                            runOnUiThread {
+                                binding.progressBarPopular.visibility = View.GONE
+                                binding.cardEmptyStatePopular.visibility = View.VISIBLE
                             }
+                            return@collect
+                        }
                         
-                        popularCourses.clear()
-                        popularCourses.addAll(courses)
-                        popularCoursesAdapter.notifyDataSetChanged()
+                        val courses = withContext(Dispatchers.Default) {
+                            enhancedCourses
+                                .filter { 
+                                    // More lenient filter - show courses that are published OR don't have the field set
+                                    it.settings.isPublished || 
+                                    (it.title.isNotEmpty() && it.instructor.name.isNotEmpty()) // Basic validation instead
+                                }
+                                .sortedByDescending { it.enrollmentInfo.totalEnrolled }
+                                .take(6)
+                                .map { enhancedCourse ->
+                                    Course(
+                                        id = enhancedCourse.id,
+                                        title = enhancedCourse.title,
+                                        instructor = enhancedCourse.instructor.name,
+                                        description = enhancedCourse.description,
+                                        category = enhancedCourse.category.name,
+                                        difficulty = enhancedCourse.difficulty.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        duration = "${enhancedCourse.courseStructure.totalDuration / 3600000}h",
+                                        thumbnailUrl = enhancedCourse.thumbnailUrl,
+                                        isPublished = enhancedCourse.settings.isPublished,
+                                        createdAt = enhancedCourse.createdAt,
+                                        updatedAt = enhancedCourse.updatedAt,
+                                        enrolledStudents = enhancedCourse.enrollmentInfo.totalEnrolled,
+                                        rating = enhancedCourse.enrollmentInfo.averageRating,
+                                        teacherId = enhancedCourse.instructor.id,
+                                        price = enhancedCourse.pricing.price,
+                                        totalLessons = enhancedCourse.courseStructure.totalLessons,
+                                        isFree = enhancedCourse.pricing.isFree
+                                    )
+                                }
+                        }
                         
-                        // Show/hide empty state for popular courses
-                        if (courses.isEmpty()) {
-                            binding.tvEmptyStatePopular.visibility = View.VISIBLE
-                            binding.tvEmptyStatePopular.text = "No courses available at the moment."
-                        } else {
-                            binding.tvEmptyStatePopular.visibility = View.GONE
+                        Log.d("StudentDashboard", "Processed ${courses.size} popular courses on background thread.")
+                        Log.d("StudentDashboard", "Courses to display: ${courses.joinToString { it.title }}")
+
+                        runOnUiThread {
+                            try {
+                                popularCourses.clear()
+                                popularCourses.addAll(courses)
+                                popularCoursesAdapter.notifyDataSetChanged()
+                                
+                                if (courses.isEmpty()) {
+                                    binding.cardEmptyStatePopular.visibility = View.VISIBLE
+                                } else {
+                                    binding.cardEmptyStatePopular.visibility = View.GONE
+                                }
+                                
+                                Log.d("StudentDashboard", "Successfully loaded ${courses.size} popular courses")
+                            } catch (e: Exception) {
+                                Log.e("StudentDashboard", "Error updating popular courses UI", e)
+                                showErrorMessage("Error updating popular courses")
+                            } finally {
+                                binding.progressBarPopular.visibility = View.GONE
+                            }
                         }
                     }
+            } catch (e: CancellationException) {
+                Log.d("StudentDashboard", "Popular courses loading cancelled")
             } catch (e: Exception) {
                 Log.e("StudentDashboard", "Error loading popular courses", e)
-                Toast.makeText(this@StudentDashboardActivity, "Error loading popular courses", Toast.LENGTH_SHORT).show()
+                runOnUiThread {
+                    binding.progressBarPopular.visibility = View.GONE
+                    binding.cardEmptyStatePopular.visibility = View.VISIBLE
+
+
+                    Toast.makeText(
+                        this@StudentDashboardActivity,
+                        "Error loading popular courses",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }
@@ -388,82 +504,86 @@ class StudentDashboardActivity : AppCompatActivity() {
         // Update analytics UI with provided values
         binding.tvEnrolledCourses.text = enrolledCount.toString()
         binding.tvCompletedCourses.text = completedCount.toString()
-        binding.tvAverageGrade.text = String.format("%.1f", avgGrade)
         binding.tvStudyStreak.text = streak.toString()
-        binding.tvPendingAssignments.text = pendingCount.toString()
     }
 
     private fun setupClickListeners() {
-        // Analytics cards click listeners
-        binding.tvEnrolledCourses.setOnClickListener {
-            startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
-        }
-        
-        binding.tvCompletedCourses.setOnClickListener {
-            // Navigate to completed courses
-            val intent = Intent(this, MyEnrolledCoursesActivity::class.java)
-            intent.putExtra("filter", "completed")
-            startActivity(intent)
-        }
-        
-        binding.tvAverageGrade.setOnClickListener {
-            // Navigate to grades/performance
-            startActivity(Intent(this, GradingSystemActivity::class.java))
-        }
-        
-        binding.tvStudyStreak.setOnClickListener {
-            // Navigate to study streak details
-            startActivity(Intent(this, StudentEngagementActivity::class.java))
-        }
-        
-        // Focus Timer click
-        binding.btnFocusTimer.setOnClickListener {
-            Toast.makeText(this, "Focus Timer feature coming soon!", Toast.LENGTH_SHORT).show()
-        }
-        
-        // Downloads click
-        binding.btnDownloads.setOnClickListener {
-            Toast.makeText(this, "Downloads feature coming soon!", Toast.LENGTH_SHORT).show()
-        }
-        
-        // Search functionality
-        binding.searchSection.setOnClickListener {
-            startActivity(Intent(this, CourseListActivity::class.java))
-        }
-        
-        // View all buttons
-        binding.tvViewAllContinue.setOnClickListener {
-            startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
-        }
-        
-        binding.tvViewAllPopular.setOnClickListener {
-            startActivity(Intent(this, CourseCatalogActivity::class.java))
-        }
-        
-        // Bottom navigation
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    // Already on home
-                    true
-                }
-                R.id.nav_courses -> {
-                    startActivity(Intent(this, CourseListActivity::class.java))
-                    true
-                }
-                R.id.nav_profile -> {
-                    startActivity(Intent(this, StudentProfileActivity::class.java))
-                    true
-                }
-                else -> false
+        try {
+            // Analytics cards click listeners
+            binding.tvEnrolledCourses.setOnClickListener {
+                startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
             }
-        }
+            
+            binding.tvCompletedCourses.setOnClickListener {
+                startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
+            }
+            
+            binding.tvStudyStreak.setOnClickListener {
+                Toast.makeText(this, "Study Streak Details - Coming Soon", Toast.LENGTH_SHORT).show()
+            }
+            
+            // Quick Action buttons
+            binding.btnBrowseCourses.setOnClickListener {
+                startActivity(Intent(this, CourseCatalogActivity::class.java))
+            }
+            
+            binding.btnMyProgress.setOnClickListener {
+                startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
+            }
+            
+            // Search section
+            binding.searchSection.setOnClickListener {
+                startActivity(Intent(this, CourseCatalogActivity::class.java))
+            }
+            
+            // Browse All Courses (from empty state)
+            binding.btnBrowseAllCourses.setOnClickListener {
+                startActivity(Intent(this, CourseCatalogActivity::class.java))
+            }
+            
+            // View All buttons
+            binding.tvViewAllContinue.setOnClickListener {
+                startActivity(Intent(this, MyEnrolledCoursesActivity::class.java))
+            }
+            
+            binding.tvViewAllPopular.setOnClickListener {
+                startActivity(Intent(this, CourseCatalogActivity::class.java))
+            }
+            
+            // Live lecture alert click listeners
+            binding.liveLectureAlert.setOnClickListener {
+                Toast.makeText(this, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+            }
+            
+            binding.btnJoinLiveNow.setOnClickListener {
+                Toast.makeText(this, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+            }
         
-        // Firebase connection test button (for debugging)
-        binding.ivProfilePicture.setOnLongClickListener {
-            testFirebaseConnection()
-            true
-        }
+            // Bottom navigation
+            binding.bottomNavigation.setOnItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.nav_home -> {
+                        // Already on home
+                        true
+                    }
+                    R.id.nav_live -> {
+                        // Navigate to Live Lectures
+                        Toast.makeText(this, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    R.id.nav_settings -> {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                        true
+                    }
+                    else -> false
+                }
+            }
+            
+            // Firebase connection test button (for debugging)
+            binding.ivProfilePicture.setOnLongClickListener {
+                testFirebaseConnection()
+                true
+            }
         
         // Set up profile picture tap handling for both single tap (profile menu) and double tap (data seeding)
         var lastClickTime = 0L
@@ -492,47 +612,74 @@ class StudentDashboardActivity : AppCompatActivity() {
                 }
             }, 300) // 300ms delay to detect double tap
         }
+        
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Error setting up click listeners", e)
+        }
     }
     
     private fun loadAnalyticsData() {
         val currentUser = auth.currentUser ?: return
         
-        lifecycleScope.launch {
+        // Cancel previous job if running
+        analyticsJob?.cancel()
+        
+        analyticsJob = lifecycleScope.launch {
             try {
+                if (!isActive) return@launch
+                
                 databaseService.getEnrolledCoursesRealTime(currentUser.uid)
-                    .collect { enrolledCourses ->
-                        // Calculate completed courses (assuming we have completion data)
-                        val completedCourses = enrolledCourses.filter { course ->
-                            // For now, we'll use a simple heuristic - courses with high rating might be completed
-                            course.rating >= 4.0
-                        }
-                        
-                        // Calculate average grade from course ratings
-                        val totalGrades = enrolledCourses.mapNotNull { it.rating }.sum()
-                        val averageGrade = if (enrolledCourses.isNotEmpty()) totalGrades.toDouble() / enrolledCourses.size else 0.0
-                        
-                        // Calculate study streak (mock data for now)
-                        val studyStreak = 7
-                        
-                        // Calculate pending assignments (mock data for now)
-                        val pendingAssignments = 3
-                        
-                        updateAnalyticsUI(
-                            enrolledCourses.size,
-                            completedCourses.size,
-                            averageGrade,
-                            studyStreak,
-                            pendingAssignments
-                        )
+                    .collect { enrolledCoursesList ->
+                        if (!isActive) return@collect
+
+                        // Fetch enrollments to compute completion status and average grade accurately
+                        firestore.collection("enrollments")
+                            .whereEqualTo("studentId", currentUser.uid)
+                            .get()
+                            .addOnSuccessListener { snap ->
+                                val enrollments = snap.documents
+                                val enrolledIds = enrollments.mapNotNull { it.getString("courseId") }
+                                val completedCount = enrollments.count { (it.getString("status") ?: "").equals("completed", ignoreCase = true)
+                                        || (it.getLong("progress") ?: 0L) >= 100L }
+                                val avgGrade = enrollments.mapNotNull { it.getDouble("grade") }.takeIf { it.isNotEmpty() }?.average() ?: 0.0
+
+                                // Filter continueCourses to only courses truly enrolled by the user
+                                val filteredCourses = enrolledCoursesList.filter { enrolledIds.contains(it.id) }
+
+                                runOnUiThread {
+                                    try {
+                                        continueCourses.clear()
+                                        continueCourses.addAll(filteredCourses.take(5))
+                                        continueCoursesAdapter.notifyDataSetChanged()
+                                        
+                                        updateAnalyticsUI(
+                                            enrolledIds.size,
+                                            completedCount,
+                                            avgGrade,
+                                            7,
+                                            0
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e("StudentDashboard", "Error updating analytics UI", e)
+                                    }
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e("StudentDashboard", "Failed to load enrollments for analytics", e)
+                            }
                     }
+            } catch (e: CancellationException) {
+                Log.d("StudentDashboard", "Analytics data loading cancelled")
             } catch (e: Exception) {
                 Log.e("StudentDashboard", "Error loading analytics data", e)
-                // Show default values on error
-                updateAnalyticsUI(0, 0, 0.0, 0, 0)
+                if (isActive) {
+                    // Show default values on error
+                    updateAnalyticsUI(0, 0, 0.0, 0, 0)
+                }
             }
         }
     }
-    
+
     override fun onResume() {
         super.onResume()
         // Refresh analytics data when returning to dashboard
@@ -540,7 +687,29 @@ class StudentDashboardActivity : AppCompatActivity() {
         loadEnrolledCourses()
         loadPopularCourses()
     }
-    
+
+    override fun onPause() {
+        super.onPause()
+        // Data loading jobs are not cancelled here to allow them to complete
+        // even if the activity is briefly paused.
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Cancel ongoing coroutines when the activity is no longer visible
+        analyticsJob?.cancel()
+        enrolledCoursesJob?.cancel()
+        popularCoursesJob?.cancel()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // Ensure all jobs are cancelled
+        analyticsJob?.cancel()
+        enrolledCoursesJob?.cancel()
+        popularCoursesJob?.cancel()
+    }
+
     override fun onBackPressed() {
         // Prevent going back to login/signup
         finishAffinity()
@@ -786,4 +955,293 @@ class StudentDashboardActivity : AppCompatActivity() {
             }
         }
     }
+    
+    // MARK: - Live Lecture Functionality
+    
+    private fun checkForLiveLectures() {
+        val currentUser = auth.currentUser ?: return
+        
+        lifecycleScope.launch {
+            try {
+                // Get user's enrolled courses using Firestore directly
+                val enrollments = firestore.collection("enrollments")
+                    .whereEqualTo("studentId", currentUser.uid)
+                    .whereEqualTo("isActive", true)
+                    .get()
+                    .await()
+                
+                val courseIds = enrollments.documents.mapNotNull { it.getString("courseId") }
+                
+                if (courseIds.isEmpty()) {
+                    return@launch
+                }
+                
+                // Check for live lectures
+                val currentTime = System.currentTimeMillis()
+                val lectures = firestore.collection("live_lectures")
+                    .whereIn("courseId", courseIds)
+                    .whereEqualTo("isActive", true)
+                    .get()
+                    .await()
+                    .toObjects(com.example.ed.models.LiveLecture::class.java)
+                
+                // Find currently live lectures
+                val liveLectures = lectures.filter { lecture ->
+                    val scheduledTimeMillis = lecture.scheduledTime?.toDate()?.time ?: 0L
+                    val endTimeMillis = lecture.endTime?.toDate()?.time ?: 0L
+                    val isLive = currentTime >= scheduledTimeMillis && 
+                                currentTime <= endTimeMillis && 
+                                lecture.isLive
+                    isLive
+                }
+                
+                // Find upcoming lectures (within next 30 minutes)
+                val upcomingLectures = lectures.filter { lecture ->
+                    val scheduledTimeMillis = lecture.scheduledTime?.toDate()?.time ?: 0L
+                    val timeUntilStart = scheduledTimeMillis - currentTime
+                    timeUntilStart > 0 && timeUntilStart <= 30 * 60 * 1000 // 30 minutes
+                }
+                
+                runOnUiThread {
+                    if (liveLectures.isNotEmpty()) {
+                        // Show live lecture alert
+                        val liveLecture = liveLectures.first()
+                        showLiveLectureAlert(liveLecture, isLive = true)
+                    } else if (upcomingLectures.isNotEmpty()) {
+                        // Show upcoming lecture alert
+                        val upcomingLecture = upcomingLectures.first()
+                        showLiveLectureAlert(upcomingLecture, isLive = false)
+                    } else {
+                        // Hide live lecture alert
+                        binding.liveLectureAlert.visibility = View.GONE
+                    }
+                }
+                
+            } catch (e: Exception) {
+                Log.e("StudentDashboard", "Error checking for live lectures", e)
+            }
+        }
+    }
+    
+    private fun showLiveLectureAlert(lecture: com.example.ed.models.LiveLecture, isLive: Boolean) {
+        binding.apply {
+            liveLectureAlert.visibility = View.VISIBLE
+            
+            if (isLive) {
+                tvLiveLectureInfo.text = "${lecture.title} - ${lecture.courseName}"
+                btnJoinLiveNow.text = "JOIN NOW"
+                btnJoinLiveNow.setOnClickListener {
+                    joinLiveLecture(lecture)
+                }
+            } else {
+                val scheduledTimeMillis = lecture.scheduledTime?.toDate()?.time ?: 0L
+                val timeUntilStartMillis = scheduledTimeMillis - System.currentTimeMillis()
+                val minutes = timeUntilStartMillis / (60 * 1000)
+                tvLiveLectureInfo.text = "${lecture.title} - Starts in ${minutes}m"
+                btnJoinLiveNow.text = "VIEW"
+                btnJoinLiveNow.setOnClickListener {
+                    Toast.makeText(this@StudentDashboardActivity, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+    
+    private fun joinLiveLecture(lecture: com.example.ed.models.LiveLecture) {
+        if (lecture.meetingLink.isNotEmpty()) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(lecture.meetingLink))
+                startActivity(intent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Unable to open meeting link", Toast.LENGTH_SHORT).show()
+                // Fallback message since live lectures activity is no longer available
+                Toast.makeText(this, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            // No direct link available and live lectures activity is no longer available
+            Toast.makeText(this, "Live lectures feature is not available", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    // MARK: - Course Enrollment Functionality
+    
+    private fun showCourseEnrollmentDialog(course: Course) {
+        try {
+            // Check if already enrolled
+            checkEnrollmentStatus(course) { isEnrolled ->
+                if (isEnrolled) {
+                    // Already enrolled - show course details
+                    val intent = Intent(this, CourseDetailsActivity::class.java)
+                    intent.putExtra("COURSE_ID", course.id)
+                    startActivity(intent)
+                } else {
+                    // Show enrollment dialog
+                    showEnrollmentConfirmationDialog(course)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Error showing enrollment dialog", e)
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun showEnrollmentConfirmationDialog(course: Course) {
+        val dialogView = layoutInflater.inflate(android.R.layout.simple_list_item_2, null)
+        
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Enroll in Course")
+            .setMessage("📚 ${course.title}\n\n" +
+                    "👨‍🏫 Instructor: ${course.instructor}\n" +
+                    "📖 ${course.description}\n\n" +
+                    "💰 ${if (course.isFree) "Free Course" else "Price: $${course.price}"}\n\n" +
+                    "Would you like to enroll in this course?")
+            .setPositiveButton("Enroll Now") { _, _ ->
+                enrollInCourse(course)
+            }
+            .setNeutralButton("Preview") { _, _ ->
+                // Show course details without enrolling
+                val intent = Intent(this, CourseDetailsActivity::class.java)
+                intent.putExtra("COURSE_ID", course.id)
+                startActivity(intent)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun enrollInCourse(course: Course) {
+        try {
+            val currentUser = auth.currentUser ?: return
+            
+            Toast.makeText(this, "Enrolling in ${course.title}...", Toast.LENGTH_SHORT).show()
+            
+            lifecycleScope.launch {
+                try {
+                    val enrollmentData = hashMapOf(
+                        "studentId" to currentUser.uid,
+                        "courseId" to course.id,
+                        "courseName" to course.title,
+                        "instructor" to course.instructor,
+                        "enrolledAt" to System.currentTimeMillis(),
+                        "progress" to 0,
+                        "completedLessons" to 0,
+                        "totalLessons" to course.totalLessons,
+                        "isActive" to true,
+                        "lastAccessedAt" to System.currentTimeMillis()
+                    )
+                    
+                    firestore.collection("enrollments")
+                        .add(enrollmentData)
+                        .addOnSuccessListener { documentReference ->
+                            Toast.makeText(this@StudentDashboardActivity, 
+                                "✅ Successfully enrolled in ${course.title}!", Toast.LENGTH_LONG).show()
+                            
+                            Log.d("StudentDashboard", "Enrolled in course: ${course.title}")
+                            
+                            // Refresh the dashboard to show updated data
+                            loadEnrolledCourses()
+                            loadStudentAnalytics()
+                            
+                            // Navigate to course details
+                            val intent = Intent(this@StudentDashboardActivity, CourseDetailsActivity::class.java)
+                            intent.putExtra("COURSE_ID", course.id)
+                            startActivity(intent)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("StudentDashboard", "Error enrolling in course", e)
+                            Toast.makeText(this@StudentDashboardActivity, 
+                                "❌ Failed to enroll: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                } catch (e: Exception) {
+                    Log.e("StudentDashboard", "Exception during enrollment", e)
+                    Toast.makeText(this@StudentDashboardActivity, 
+                        "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Exception in enrollInCourse", e)
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun checkEnrollmentStatus(course: Course, callback: (Boolean) -> Unit) {
+        try {
+            val currentUser = auth.currentUser ?: return callback(false)
+            
+            firestore.collection("enrollments")
+                .whereEqualTo("studentId", currentUser.uid)
+                .whereEqualTo("courseId", course.id)
+                .whereEqualTo("isActive", true)
+                .get()
+                .addOnSuccessListener { documents ->
+                    callback(!documents.isEmpty)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("StudentDashboard", "Error checking enrollment status", e)
+                    callback(false)
+                }
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Exception checking enrollment", e)
+            callback(false)
+        }
+    }
+    
+    private fun showCourseOptionsMenu(course: Course, view: View) {
+        try {
+            val options = arrayOf(
+                "📖 View Details",
+                "📝 Enroll in Course",
+                "👀 Preview Content",
+                "📤 Share Course"
+            )
+            
+            androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(course.title)
+                .setItems(options) { _, which ->
+                    when (which) {
+                        0 -> {
+                            // View Details
+                            val intent = Intent(this, CourseDetailsActivity::class.java)
+                            intent.putExtra("COURSE_ID", course.id)
+                            startActivity(intent)
+                        }
+                        1 -> {
+                            // Enroll in Course
+                            showCourseEnrollmentDialog(course)
+                        }
+                        2 -> {
+                            // Preview Content
+                            Toast.makeText(this, "Preview feature coming soon", Toast.LENGTH_SHORT).show()
+                        }
+                        3 -> {
+                            // Share Course
+                            shareCourse(course)
+                        }
+                    }
+                }
+                .show()
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Error showing course options", e)
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    private fun shareCourse(course: Course) {
+        try {
+            val shareText = "Check out this course: ${course.title}\n" +
+                    "Instructor: ${course.instructor}\n" +
+                    "${course.description}\n\n" +
+                    "Join me on EduFlex!"
+            
+            val shareIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, shareText)
+                type = "text/plain"
+            }
+            
+            startActivity(Intent.createChooser(shareIntent, "Share Course"))
+        } catch (e: Exception) {
+            Log.e("StudentDashboard", "Error sharing course", e)
+            Toast.makeText(this, "Error sharing course", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
 }

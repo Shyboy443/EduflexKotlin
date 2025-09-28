@@ -241,7 +241,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:background="@android:color/white"
+        android:background="@color/surface_primary"
         android:elevation="8dp">
 
         <com.google.android.material.button.MaterialButton

@@ -57,4 +57,14 @@ object ThemeManager {
         saveTheme(context, newTheme)
         applyTheme(newTheme)
     }
+    
+    /**
+     * Forces recreation of all activities to apply theme changes
+     * Call this after changing theme in an activity
+     */
+    fun applyThemeAndRecreate(activity: android.app.Activity, theme: String) {
+        saveTheme(activity, theme)
+        applyTheme(theme)
+        activity.recreate()
+    }
 }

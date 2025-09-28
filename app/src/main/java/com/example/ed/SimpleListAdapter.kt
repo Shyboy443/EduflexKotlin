@@ -33,4 +33,10 @@ class SimpleListAdapter(
     }
 
     override fun getItemCount(): Int = items.size
+    
+    fun updateItems(newItems: List<String>) {
+        items.clear()
+        items.addAll(newItems)
+        notifyDataSetChanged()
+    }
 }

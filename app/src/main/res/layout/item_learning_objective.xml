@@ -22,22 +22,21 @@
             android:tint="@color/brand_primary" />
 
         <TextView
-            android:id="@+id/tv_objective_text"
+            android:id="@+id/tvObjective"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Learning objective text goes here"
             android:textSize="14sp"
-            android:textColor="@android:color/black" />
+            android:textColor="?attr/colorOnSurface" />
 
-        <Button
-            android:id="@+id/btn_delete_objective"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Remove"
-            android:textSize="12sp"
-            android:backgroundTint="@android:color/holo_red_light"
-            style="@style/Widget.MaterialComponents.Button" />
+        <ImageButton
+            android:id="@+id/btnRemove"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_close"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Remove objective" />
 
     </LinearLayout>
 

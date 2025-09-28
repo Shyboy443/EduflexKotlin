@@ -25,7 +25,7 @@ data class CourseAnalytics(
     val rating: Float = 0f,
     val totalRevenue: Double = 0.0,
     val lessonAnalytics: List<LessonAnalytics> = emptyList(),
-    val weeklyProgress: List<WeeklyProgress> = emptyList(),
+    val weeklyProgress: List<WeeklyAnalytics> = emptyList(),
     val studentFeedback: List<StudentFeedback> = emptyList()
 )
 
@@ -86,7 +86,7 @@ data class MonthlyStats(
     val totalStudyHours: Long = 0 // in hours
 )
 
-data class WeeklyProgress(
+data class WeeklyAnalytics(
     val weekStartDate: String = "", // YYYY-MM-DD format
     val newEnrollments: Int = 0,
     val lessonsCompleted: Int = 0,

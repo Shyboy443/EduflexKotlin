@@ -12,18 +12,18 @@
         android:title="Courses" />
     
     <item
+        android:id="@+id/nav_weekly_content"
+        android:icon="@drawable/ic_article"
+        android:title="Weekly Content" />
+    
+    <item
         android:id="@+id/nav_students"
         android:icon="@drawable/ic_people"
         android:title="Students" />
     
     <item
-        android:id="@+id/nav_analytics"
-        android:icon="@drawable/ic_analytics"
-        android:title="Analytics" />
-    
-    <item
-        android:id="@+id/nav_profile"
-        android:icon="@drawable/ic_person"
-        android:title="Profile" />
+        android:id="@+id/nav_settings"
+        android:icon="@drawable/ic_settings"
+        android:title="Settings" />
 
 </menu>

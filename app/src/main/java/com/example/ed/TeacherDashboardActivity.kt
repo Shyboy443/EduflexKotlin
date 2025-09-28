@@ -9,6 +9,12 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import com.example.ed.ui.teacher.DashboardFragment
+import com.example.ed.ui.teacher.CoursesFragment
+import com.example.ed.ui.teacher.WeeklyContentFragment
+import com.example.ed.ui.teacher.StudentsFragment
+import com.example.ed.ui.teacher.TeacherSettingsFragment
 import com.example.ed.utils.NetworkUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -29,14 +35,19 @@ class TeacherDashboardActivity : AppCompatActivity() {
     private lateinit var tvUpcomingClasses: TextView
     private lateinit var tvViewAllTools: TextView
     private lateinit var tvViewAllCourses: TextView
-    private lateinit var btnGenerateQuiz: LinearLayout
+    // private lateinit var btnGenerateQuiz: LinearLayout // removed legacy AI quiz entry point
     private lateinit var btnGradeAssignments: LinearLayout
     private lateinit var btnCreateCourse: LinearLayout
     private lateinit var btnManageCourses: LinearLayout
+    private lateinit var btnManageContent: LinearLayout
     private lateinit var bottomNavigation: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Apply current theme before setting content view
+        ThemeManager.applyCurrentTheme(this)
+        
         setContentView(R.layout.activity_teacher_dashboard)
 
         // Initialize Firebase
@@ -68,10 +79,11 @@ class TeacherDashboardActivity : AppCompatActivity() {
         tvUpcomingClasses = findViewById(R.id.tv_upcoming_classes)
         tvViewAllTools = findViewById(R.id.tv_view_all_tools)
         tvViewAllCourses = findViewById(R.id.tv_view_all_courses)
-        btnGenerateQuiz = findViewById(R.id.btn_generate_quiz)
+        // btnGenerateQuiz = findViewById(R.id.btn_generate_quiz) // removed
         btnGradeAssignments = findViewById(R.id.btn_grade_assignments)
         btnCreateCourse = findViewById(R.id.btn_create_course)
         btnManageCourses = findViewById(R.id.btn_manage_courses)
+        btnManageContent = findViewById(R.id.btn_manage_content)
         bottomNavigation = findViewById(R.id.bottom_navigation)
     }
 
@@ -91,9 +103,7 @@ class TeacherDashboardActivity : AppCompatActivity() {
             Toast.makeText(this, "View all tools clicked", Toast.LENGTH_SHORT).show()
         }
 
-        btnGenerateQuiz.setOnClickListener {
-            startActivity(Intent(this, AIQuizGenerationActivity::class.java))
-        }
+        // Removed legacy AI quiz generator navigation
 
         btnGradeAssignments.setOnClickListener {
             // TODO: Navigate to assignment grading
@@ -113,6 +123,16 @@ class TeacherDashboardActivity : AppCompatActivity() {
         btnManageCourses.setOnClickListener {
             val intent = Intent(this, CourseListActivity::class.java)
             startActivity(intent)
+        }
+
+        btnManageContent.setOnClickListener {
+            val intent = Intent(this, WeeklyContentActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // Add live lectures button click listener
+        findViewById<LinearLayout>(R.id.btn_live_lectures)?.setOnClickListener {
+            Toast.makeText(this, "Live lectures management feature is not available", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -211,11 +231,14 @@ class TeacherDashboardActivity : AppCompatActivity() {
         
         db.collection("classes")
             .whereEqualTo("teacherId", currentUser.uid)
-            .whereGreaterThan("scheduledTime", currentTime)
-            .whereLessThan("scheduledTime", nextWeek)
             .get()
             .addOnSuccessListener { documents ->
-                val upcomingCount = documents.size()
+                // Filter upcoming classes in code to avoid index requirement
+                val upcomingClasses = documents.documents.filter { doc ->
+                    val scheduledTime = doc.getLong("scheduledTime") ?: 0L
+                    scheduledTime > currentTime && scheduledTime < nextWeek
+                }
+                val upcomingCount = upcomingClasses.size
                 tvUpcomingClasses.text = upcomingCount.toString()
                 cacheUpcomingClassesCount(upcomingCount)
             }
@@ -252,34 +275,46 @@ class TeacherDashboardActivity : AppCompatActivity() {
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_dashboard -> {
-                    // Already on dashboard, do nothing
+                    switchToFragment(DashboardFragment())
                     true
                 }
                 R.id.nav_courses -> {
-                    val intent = Intent(this, CourseListActivity::class.java)
-                    startActivity(intent)
+                    switchToFragment(CoursesFragment())
+                    true
+                }
+                R.id.nav_weekly_content -> {
+                    switchToFragment(WeeklyContentFragment())
                     true
                 }
                 R.id.nav_students -> {
-                    // TODO: Navigate to students management
-                    Toast.makeText(this, "Students management coming soon", Toast.LENGTH_SHORT).show()
+                    switchToFragment(StudentsFragment())
                     true
                 }
-                R.id.nav_analytics -> {
-                    // TODO: Navigate to analytics
-                    Toast.makeText(this, "Analytics coming soon", Toast.LENGTH_SHORT).show()
-                    true
-                }
-                R.id.nav_profile -> {
-                    showProfileMenu()
+                R.id.nav_settings -> {
+                    switchToFragment(TeacherSettingsFragment())
                     true
                 }
                 else -> false
             }
         }
         
-        // Set dashboard as selected by default
-        bottomNavigation.selectedItemId = R.id.nav_dashboard
+        // Set initial fragment
+        if (supportFragmentManager.findFragmentById(R.id.fragment_container) == null) {
+            switchToFragment(DashboardFragment())
+            bottomNavigation.selectedItemId = R.id.nav_dashboard
+        }
+    }
+
+    private fun switchToFragment(fragment: Fragment) {
+        supportFragmentManager
+            .beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
+    }
+
+    fun switchToCoursesFragment() {
+        switchToFragment(CoursesFragment())
+        bottomNavigation.selectedItemId = R.id.nav_courses
     }
 
     override fun onBackPressed() {
@@ -289,14 +324,15 @@ class TeacherDashboardActivity : AppCompatActivity() {
     }
 
     private fun showProfileMenu() {
-        val options = arrayOf("Profile Settings", "Logout")
+        val options = arrayOf("Settings", "Logout")
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("Profile")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        // Profile Settings - TODO: Navigate to profile settings
-                        Toast.makeText(this, "Profile settings coming soon", Toast.LENGTH_SHORT).show()
+                        // Navigate to teacher settings
+                        val intent = Intent(this, TeacherSettingsActivity::class.java)
+                        startActivity(intent)
                     }
                     1 -> {
                         showLogoutConfirmation()

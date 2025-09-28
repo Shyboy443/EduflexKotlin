@@ -36,9 +36,9 @@ class DatabaseService private constructor(private val context: Context) {
     // MARK: - Course Operations
     
     fun getCoursesRealTime(): Flow<List<EnhancedCourse>> = callbackFlow {
+        Log.d(TAG, "Starting getCoursesRealTime() - Setting up Firestore listener")
+        
         val listener = firestore.collection("courses")
-            .whereEqualTo("isActive", true)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to courses", error)
@@ -46,64 +46,138 @@ class DatabaseService private constructor(private val context: Context) {
                     return@addSnapshotListener
                 }
                 
+                Log.d(TAG, "Firestore snapshot received - Document count: ${snapshot?.documents?.size ?: 0}")
+                
                 val courses = snapshot?.documents?.mapNotNull { doc ->
                     try {
-                        EnhancedCourse(
+                        Log.d(TAG, "Processing course document: ${doc.id}")
+                        Log.d(TAG, "Document data: ${doc.data}")
+                        
+                        val course = EnhancedCourse(
                             id = doc.id,
-                            title = doc.getString("title") ?: "",
-                            subtitle = doc.getString("subtitle") ?: "",
-                            description = doc.getString("description") ?: "",
-                            longDescription = doc.getString("longDescription") ?: "",
+                            title = try {
+                                doc.getString("title") ?: "Untitled Course"
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting title for course ${doc.id}: ${e.message}")
+                                "Untitled Course"
+                            },
+                            subtitle = try {
+                                doc.getString("subtitle") ?: ""
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting subtitle for course ${doc.id}: ${e.message}")
+                                ""
+                            },
+                            description = try {
+                                doc.getString("description") ?: "No description available"
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting description for course ${doc.id}: ${e.message}")
+                                "No description available"
+                            },
+                            longDescription = try {
+                                doc.getString("longDescription") ?: doc.getString("description") ?: "No description available"
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting longDescription for course ${doc.id}: ${e.message}")
+                                "No description available"
+                            },
                             instructor = TeacherProfile(
-                                id = doc.getString("teacherId") ?: "",
-                                name = doc.getString("instructor") ?: ""
+                                id = try {
+                                    doc.getString("teacherId") ?: ""
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Error getting teacherId for course ${doc.id}: ${e.message}")
+                                    ""
+                                },
+                                name = try {
+                                    doc.getString("instructor") ?: doc.getString("teacherName") ?: doc.getString("instructor") ?: "Unknown Instructor"
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Error getting instructor name for course ${doc.id}: ${e.message}")
+                                    doc.getString("teacherName") ?: "Unknown Instructor"
+                                }
                             ),
                             category = CourseCategory(
-                                name = doc.getString("category") ?: ""
+                                name = try {
+                                    doc.getString("category") ?: "General"
+                                } catch (e: Exception) {
+                                    Log.w(TAG, "Error getting category for course ${doc.id}: ${e.message}")
+                                    "General"
+                                }
                             ),
                             difficulty = try {
                                 CourseDifficulty.valueOf(doc.getString("difficulty")?.uppercase() ?: "BEGINNER")
                             } catch (e: Exception) {
                                 CourseDifficulty.BEGINNER
                             },
-                            language = doc.getString("language") ?: "en",
-                            thumbnailUrl = doc.getString("thumbnailUrl") ?: "",
-                            previewVideoUrl = doc.getString("previewVideoUrl") ?: "",
+                            language = try {
+                                doc.getString("language") ?: "en"
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting language for course ${doc.id}: ${e.message}")
+                                "en"
+                            },
+                            thumbnailUrl = try {
+                                doc.getString("thumbnailUrl") ?: ""
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting thumbnailUrl for course ${doc.id}: ${e.message}")
+                                ""
+                            },
+                            previewVideoUrl = try {
+                                doc.getString("previewVideoUrl") ?: ""
+                            } catch (e: Exception) {
+                                Log.w(TAG, "Error getting previewVideoUrl for course ${doc.id}: ${e.message}")
+                                ""
+                            },
                             tags = doc.get("tags") as? List<String> ?: emptyList(),
                             learningObjectives = doc.get("learningObjectives") as? List<String> ?: emptyList(),
                             prerequisites = doc.get("prerequisites") as? List<String> ?: emptyList(),
                             pricing = CoursePricing(
-                                isFree = doc.getBoolean("isFree") ?: false,
+                                isFree = doc.getBoolean("isFree")
+                                    ?: ((doc.getDouble("price") ?: 0.0) <= 0.0),
                                 price = doc.getDouble("price") ?: 0.0
                             ),
                             settings = CourseSettings(
-                                isPublished = doc.getBoolean("isPublished") ?: false,
+                                isPublished = doc.getBoolean("isPublished") ?: true, // Default to published for sample data
                                 allowEnrollment = doc.getBoolean("allowEnrollment") ?: true
                             ),
                             status = try {
-                                CourseStatus.valueOf(doc.getString("status")?.uppercase() ?: "DRAFT")
+                                CourseStatus.valueOf(doc.getString("status")?.uppercase() ?: "PUBLISHED")
                             } catch (e: Exception) {
-                                CourseStatus.DRAFT
+                                CourseStatus.PUBLISHED // Default to published for sample data
                             },
-                            createdAt = doc.getLong("createdAt") ?: System.currentTimeMillis(),
-                            updatedAt = doc.getLong("updatedAt") ?: System.currentTimeMillis()
+                            createdAt = try {
+                                doc.getTimestamp("createdAt")?.toDate()?.time ?: doc.getLong("createdAt") ?: System.currentTimeMillis()
+                            } catch (e: Exception) {
+                                doc.getLong("createdAt") ?: System.currentTimeMillis()
+                            },
+                            updatedAt = try {
+                                doc.getTimestamp("updatedAt")?.toDate()?.time ?: doc.getLong("updatedAt") ?: System.currentTimeMillis()
+                            } catch (e: Exception) {
+                                doc.getLong("updatedAt") ?: System.currentTimeMillis()
+                            }
                         )
+                        
+                        Log.d(TAG, "Successfully parsed course: ${course.title}")
+                        course
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to parse course: ${doc.id}", e)
                         null
                     }
                 } ?: emptyList()
                 
-                trySend(courses)
+                // Sort courses by createdAt in descending order (newest first)
+                val sortedCourses = courses.sortedByDescending { it.createdAt }
+                
+                Log.d(TAG, "Parsed ${sortedCourses.size} courses successfully")
+                trySend(sortedCourses)
+                Log.d(TAG, "Fetched ${courses.size} courses")
             }
         
-        awaitClose { listener.remove() }
+        awaitClose { 
+            Log.d(TAG, "Closing getCoursesRealTime() listener")
+            listener.remove() 
+        }
     }
     
     fun getCoursesByInstructorRealTime(instructorId: String): Flow<List<Course>> = callbackFlow {
         val listener = firestore.collection("courses")
             .whereEqualTo("teacherId", instructorId)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to instructor courses", error)
@@ -123,8 +197,18 @@ class DatabaseService private constructor(private val context: Context) {
                                 duration = doc.getString("duration") ?: "",
                                 thumbnailUrl = doc.getString("thumbnailUrl") ?: "",
                                 isPublished = doc.getBoolean("isPublished") ?: false,
-                                createdAt = doc.getLong("createdAt") ?: 0L,
-                                updatedAt = doc.getLong("updatedAt") ?: 0L,
+                                createdAt = try {
+                                    val timestamp = doc.getTimestamp("createdAt")
+                                    timestamp?.toDate()?.time ?: doc.getLong("createdAt") ?: 0L
+                                } catch (e: Exception) {
+                                    doc.getLong("createdAt") ?: 0L
+                                },
+                                updatedAt = try {
+                                    val timestamp = doc.getTimestamp("updatedAt")
+                                    timestamp?.toDate()?.time ?: doc.getLong("updatedAt") ?: 0L
+                                } catch (e: Exception) {
+                                    doc.getLong("updatedAt") ?: 0L
+                                },
                                 enrolledStudents = doc.getLong("enrolledStudents")?.toInt() ?: 0,
                                 rating = doc.getDouble("rating")?.toFloat() ?: 0.0f,
                                 teacherId = doc.getString("teacherId") ?: "",
@@ -136,10 +220,92 @@ class DatabaseService private constructor(private val context: Context) {
                     }
                 } ?: emptyList()
                 
-                trySend(courses)
+                // Sort courses by createdAt in descending order (newest first)
+                val sortedCourses = courses.sortedByDescending { it.createdAt }
+                
+                trySend(sortedCourses)
             }
         
         awaitClose { listener.remove() }
+    }
+
+    // MARK: - Teacher Enrollments
+    suspend fun getTeacherEnrollments(teacherId: String): List<StudentEnrollment> = withContext(Dispatchers.IO) {
+        try {
+            // Get teacher's courses
+            val coursesSnapshot = firestore.collection("courses")
+                .whereEqualTo("teacherId", teacherId)
+                .get().await()
+
+            val courseIdToName = coursesSnapshot.documents.associate { doc ->
+                doc.id to (doc.getString("title") ?: "Untitled Course")
+            }
+
+            if (courseIdToName.isEmpty()) return@withContext emptyList()
+
+            val courseIds = courseIdToName.keys.toList()
+            val chunks = courseIds.chunked(10)
+            val enrollmentsRaw = mutableListOf<Map<String, Any?>>()
+
+            // Fetch enrollments per chunk
+            for (chunk in chunks) {
+                val snapshot = firestore.collection("enrollments")
+                    .whereIn("courseId", chunk)
+                    .get().await()
+                enrollmentsRaw.addAll(snapshot.documents.map { it.data ?: emptyMap() })
+            }
+
+            if (enrollmentsRaw.isEmpty()) return@withContext emptyList()
+
+            // Collect unique student IDs
+            val studentIds = enrollmentsRaw.mapNotNull { it["studentId"] as? String }.distinct()
+
+            // Fetch student profiles in chunks
+            val studentInfo = mutableMapOf<String, Pair<String, String>>() // id -> (name,email)
+            val studentChunks = studentIds.chunked(10)
+            for (chunk in studentChunks) {
+                val snapshot = firestore.collection("users")
+                    .whereIn(FieldPath.documentId(), chunk)
+                    .get().await()
+                snapshot.documents.forEach { doc ->
+                    val name = doc.getString("fullName")
+                        ?: doc.getString("displayName")
+                        ?: doc.getString("name")
+                        ?: "Student"
+                    val email = doc.getString("email") ?: ""
+                    studentInfo[doc.id] = name to email
+                }
+            }
+
+            // Build StudentEnrollment list
+            val result = enrollmentsRaw.mapNotNull { e ->
+                try {
+                    val studentId = e["studentId"] as? String ?: return@mapNotNull null
+                    val courseId = e["courseId"] as? String ?: return@mapNotNull null
+                    val enrolledAt = (e["enrolledAt"] as? Number)?.toLong() ?: 0L
+                    val progress = (e["progress"] as? Number)?.toInt() ?: 0
+                    val isActive = (e["isActive"] as? Boolean) ?: true
+                    val (name, email) = studentInfo[studentId] ?: ("Student" to "")
+                    StudentEnrollment(
+                        id = UUID.randomUUID().toString(),
+                        studentId = studentId,
+                        studentName = name,
+                        studentEmail = email,
+                        courseId = courseId,
+                        courseName = courseIdToName[courseId] ?: "",
+                        enrolledAt = enrolledAt,
+                        progress = progress,
+                        isActive = isActive
+                    )
+                } catch (_: Exception) { null }
+            }
+
+            // Sort by enrolledAt desc
+            result.sortedByDescending { it.enrolledAt }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching teacher enrollments", e)
+            emptyList()
+        }
     }
     
     suspend fun getCourseById(courseId: String): Course? {
@@ -156,8 +322,18 @@ class DatabaseService private constructor(private val context: Context) {
                     duration = document.getString("duration") ?: "",
                     thumbnailUrl = document.getString("thumbnailUrl") ?: "",
                     isPublished = document.getBoolean("isPublished") ?: false,
-                    createdAt = document.getLong("createdAt") ?: 0L,
-                    updatedAt = document.getLong("updatedAt") ?: 0L,
+                    createdAt = try {
+                        val timestamp = document.getTimestamp("createdAt")
+                        timestamp?.toDate()?.time ?: document.getLong("createdAt") ?: 0L
+                    } catch (e: Exception) {
+                        document.getLong("createdAt") ?: 0L
+                    },
+                    updatedAt = try {
+                        val timestamp = document.getTimestamp("updatedAt")
+                        timestamp?.toDate()?.time ?: document.getLong("updatedAt") ?: 0L
+                    } catch (e: Exception) {
+                        document.getLong("updatedAt") ?: 0L
+                    },
                     enrolledStudents = document.getLong("enrolledStudents")?.toInt() ?: 0,
                     rating = document.getDouble("rating")?.toFloat() ?: 0.0f,
                     teacherId = document.getString("teacherId") ?: "",
@@ -217,8 +393,18 @@ class DatabaseService private constructor(private val context: Context) {
                     } catch (e: Exception) {
                         CourseStatus.DRAFT
                     },
-                    createdAt = document.getLong("createdAt") ?: System.currentTimeMillis(),
-                    updatedAt = document.getLong("updatedAt") ?: System.currentTimeMillis()
+                    createdAt = try {
+                        val timestamp = document.getTimestamp("createdAt")
+                        timestamp?.toDate()?.time ?: document.getLong("createdAt") ?: System.currentTimeMillis()
+                    } catch (e: Exception) {
+                        document.getLong("createdAt") ?: System.currentTimeMillis()
+                    },
+                    updatedAt = try {
+                        val timestamp = document.getTimestamp("updatedAt")
+                        timestamp?.toDate()?.time ?: document.getLong("updatedAt") ?: System.currentTimeMillis()
+                    } catch (e: Exception) {
+                        document.getLong("updatedAt") ?: System.currentTimeMillis()
+                    }
                 )
                 
                 // Cache the result
@@ -238,7 +424,6 @@ class DatabaseService private constructor(private val context: Context) {
     fun getAssignmentsRealTime(instructorId: String): Flow<List<Assignment>> = callbackFlow {
         val listener = firestore.collection("assignments")
             .whereEqualTo("instructorId", instructorId)
-            .orderBy("dueDate", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to assignments", error)
@@ -265,7 +450,10 @@ class DatabaseService private constructor(private val context: Context) {
                     }
                 } ?: emptyList()
                 
-                trySend(assignments)
+                // Sort assignments by dueDate in ascending order (earliest first)
+                val sortedAssignments = assignments.sortedBy { it.dueDate }
+                
+                trySend(sortedAssignments)
             }
         
         awaitClose { listener.remove() }
@@ -282,7 +470,6 @@ class DatabaseService private constructor(private val context: Context) {
         
         val listener = firestore.collection("announcements")
             .whereIn("courseId", courseIds)
-            .orderBy("createdAt", Query.Direction.DESCENDING)
             .limit(10)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -312,7 +499,10 @@ class DatabaseService private constructor(private val context: Context) {
                     }
                 } ?: emptyList()
                 
-                trySend(announcements)
+                // Sort announcements by createdAt in descending order (newest first)
+                val sortedAnnouncements = announcements.sortedByDescending { it.createdAt }
+                
+                trySend(sortedAnnouncements)
             }
         
         awaitClose { listener.remove() }
@@ -321,63 +511,148 @@ class DatabaseService private constructor(private val context: Context) {
     // MARK: - Enrollment Operations
     
     fun getEnrolledCoursesRealTime(userId: String): Flow<List<Course>> = callbackFlow {
+        Log.d(TAG, "Starting getEnrolledCoursesRealTime for user: $userId")
+        
         val listener = firestore.collection("enrollments")
             .whereEqualTo("studentId", userId)
-            .whereEqualTo("status", "active")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e(TAG, "Error listening to enrollments", error)
+                    val errorMsg = "Error listening to enrollments: ${error.message}"
+                    Log.e(TAG, errorMsg, error)
+                    try {
+                        trySend(emptyList())
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error sending empty list to flow", e)
+                    }
+                    return@addSnapshotListener
+                }
+                
+                if (snapshot == null || snapshot.isEmpty) {
+                    Log.d(TAG, "No enrollments found for user: $userId")
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
                 
-                val courseIds = snapshot?.documents?.mapNotNull { 
-                    it.getString("courseId") 
-                } ?: emptyList()
+                // Get all course IDs from enrollments (including inactive ones for now)
+                val enrollments = snapshot.documents.mapNotNull { doc ->
+                    try {
+                        val status = doc.getString("status")?.lowercase()
+                        val courseId = doc.getString("courseId")
+                        if (!courseId.isNullOrBlank()) {
+                            Triple(doc.id, courseId, status)
+                        } else {
+                            Log.w(TAG, "Enrollment document ${doc.id} has null or blank courseId")
+                            null
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error parsing enrollment document: ${doc.id}", e)
+                        null
+                    }
+                }
+                
+                if (enrollments.isEmpty()) {
+                    Log.d(TAG, "No valid course IDs found in enrollments")
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                
+                Log.d(TAG, "Found ${enrollments.size} enrollments, fetching course details...")
+                
+                // Get all course IDs (unique) and filter out any nulls
+                val courseIds = enrollments.map { it.second }.distinct().filterNotNull().filter { it.isNotBlank() }
                 
                 if (courseIds.isEmpty()) {
+                    Log.d(TAG, "No valid course IDs after filtering")
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
                 
-                // Get course details for enrolled courses
-                firestore.collection("courses")
-                    .whereIn(FieldPath.documentId(), courseIds)
-                    .get()
-                    .addOnSuccessListener { courseSnapshot ->
-                        val courses = courseSnapshot.documents.mapNotNull { doc ->
-                            try {
-                                Course(
-                                    id = doc.id,
-                                    title = doc.getString("title") ?: "",
-                                    instructor = doc.getString("instructor") ?: "",
-                                    description = doc.getString("description") ?: "",
-                                    category = doc.getString("category") ?: "",
-                                    difficulty = doc.getString("difficulty") ?: "Beginner",
-                                    duration = doc.getString("duration") ?: "",
-                                    thumbnailUrl = doc.getString("thumbnailUrl") ?: "",
-                                    isPublished = doc.getBoolean("isPublished") ?: false,
-                                    createdAt = doc.getLong("createdAt") ?: 0L,
-                                    updatedAt = doc.getLong("updatedAt") ?: 0L,
-                                    enrolledStudents = doc.getLong("enrolledStudents")?.toInt() ?: 0,
-                                    rating = doc.getDouble("rating")?.toFloat() ?: 0.0f,
-                                    teacherId = doc.getString("teacherId") ?: "",
-                                    price = doc.getDouble("price") ?: 0.0
-                                )
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Error parsing enrolled course document: ${doc.id}", e)
-                                null
+                Log.d(TAG, "Valid course IDs: $courseIds")
+                
+                // Split into chunks to handle Firestore's limit of 10 items in whereIn
+                val chunks = courseIds.chunked(10)
+                val allCourses = mutableListOf<Course>()
+                val completedChunks = mutableListOf<Boolean>()
+                
+                chunks.forEachIndexed { index, chunk ->
+                    // Double-check chunk has no null or empty values
+                    val validChunk = chunk.filter { !it.isNullOrBlank() }
+                    if (validChunk.isEmpty()) {
+                        Log.w(TAG, "Chunk $index is empty after filtering, skipping")
+                        completedChunks.add(true)
+                        return@forEachIndexed
+                    }
+                    
+                    firestore.collection("courses")
+                        .whereIn(FieldPath.documentId(), validChunk)
+                        .get()
+                        .addOnSuccessListener { courseSnapshot ->
+                            Log.d(TAG, "Fetched ${courseSnapshot.size()} courses for chunk $index")
+                            
+                            val courses = courseSnapshot.documents.mapNotNull { doc ->
+                                try {
+                                    Course(
+                                        id = doc.id,
+                                        title = doc.getString("title") ?: "Untitled Course",
+                                        instructor = doc.getString("instructor") ?: "Unknown Instructor",
+                                        description = doc.getString("description") ?: "No description available",
+                                        category = doc.getString("category") ?: "Uncategorized",
+                                        difficulty = doc.getString("difficulty") ?: "Beginner",
+                                        duration = doc.getString("duration") ?: "0h",
+                                        thumbnailUrl = doc.getString("thumbnailUrl") ?: "",
+                                        isPublished = doc.getBoolean("isPublished") ?: false,
+                                        createdAt = try {
+                                            val timestamp = doc.getTimestamp("createdAt")
+                                            timestamp?.toDate()?.time ?: doc.getLong("createdAt") ?: 0L
+                                        } catch (e: Exception) {
+                                            doc.getLong("createdAt") ?: 0L
+                                        },
+                                        updatedAt = try {
+                                            val timestamp = doc.getTimestamp("updatedAt")
+                                            timestamp?.toDate()?.time ?: doc.getLong("updatedAt") ?: 0L
+                                        } catch (e: Exception) {
+                                            doc.getLong("updatedAt") ?: 0L
+                                        },
+                                        enrolledStudents = doc.getLong("enrolledStudents")?.toInt() ?: 0,
+                                        rating = doc.getDouble("rating")?.toFloat() ?: 0.0f,
+                                        teacherId = doc.getString("teacherId") ?: "",
+                                        price = doc.getDouble("price") ?: 0.0
+                                    )
+                                } catch (e: Exception) {
+                                    Log.e(TAG, "Error parsing course document: ${doc.id}", e)
+                                    null
+                                }
+                            }
+                            
+                            allCourses.addAll(courses)
+                            completedChunks.add(true)
+                            
+                            // If all chunks are processed, send the combined results
+                            if (completedChunks.size == chunks.size) {
+                                Log.d(TAG, "All chunks processed, sending ${allCourses.size} courses to flow")
+                                trySend(allCourses)
                             }
                         }
-                        trySend(courses)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "Error getting enrolled courses", e)
-                        trySend(emptyList())
-                    }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "Error fetching courses for chunk $index", e)
+                            completedChunks.add(false)
+                            
+                            // If all chunks are processed (even with failures), send what we have
+                            if (completedChunks.size == chunks.size && allCourses.isNotEmpty()) {
+                                Log.w(TAG, "Some chunks failed, but sending ${allCourses.size} successfully loaded courses")
+                                trySend(allCourses)
+                            } else if (completedChunks.size == chunks.size) {
+                                Log.e(TAG, "All chunks failed to load courses")
+                                trySend(emptyList())
+                            }
+                        }
+                }
             }
         
-        awaitClose { listener.remove() }
+        awaitClose { 
+            Log.d(TAG, "Removing enrollments listener for user: $userId")
+            listener.remove() 
+        }
     }
     
     // MARK: - Statistics Operations
@@ -470,7 +745,6 @@ class DatabaseService private constructor(private val context: Context) {
     fun getPaymentHistoryRealTime(userId: String): Flow<List<PaymentRecord>> = callbackFlow {
         val listener = firestore.collection("payments")
             .whereEqualTo("userId", userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     Log.e(TAG, "Error listening to payment history", error)
@@ -499,7 +773,10 @@ class DatabaseService private constructor(private val context: Context) {
                     }
                 } ?: emptyList()
                 
-                trySend(payments)
+                // Sort payments by timestamp in descending order (newest first)
+                val sortedPayments = payments.sortedByDescending { it.timestamp }
+                
+                trySend(sortedPayments)
             }
         
         awaitClose { listener.remove() }

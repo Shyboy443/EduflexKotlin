@@ -4,6 +4,7 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
     id("kotlin-kapt")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -113,7 +114,6 @@ dependencies {
     implementation("com.google.firebase:firebase-appcheck-ktx")
     implementation("com.google.firebase:firebase-appcheck-debug")
     
-    // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.6.0")
     
     // Facebook SDK
@@ -121,12 +121,14 @@ dependencies {
     
     // Glide for image loading
     implementation("com.github.bumptech.glide:glide:4.15.1")
+    kapt("com.github.bumptech.glide:compiler:4.15.1")
     
     // Charts for analytics
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     
     // Material Design Components
-    implementation("com.google.android.material:material:1.10.0")
+    
+    // Gemini AI via REST (OkHttp/Retrofit already included)
     
     // Retrofit for API calls (for AI integration)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

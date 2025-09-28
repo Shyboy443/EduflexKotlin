@@ -48,4 +48,49 @@
     <color name="dashboard_progress_primary">@color/brand_primary</color>
     <color name="dashboard_text_primary">#FFFFFF</color>
     <color name="dashboard_text_secondary">#B3B3B3</color>
+    
+    <!-- Additional Dark Mode Colors -->
+    <color name="background_color">#121212</color>
+    <color name="background_white">#1E1E1E</color>
+    <color name="surface_primary">#1E1E1E</color>
+    <color name="surface_secondary">#2F2F2F</color>
+    <color name="surface_tertiary">#404040</color>
+    <color name="card_background">#2F2F2F</color>
+    <color name="divider_color">#404040</color>
+    <color name="shadow_color">#40000000</color>
+    
+    <!-- Activity Backgrounds -->
+    <color name="primary_color">#4A9BDC</color>
+    <color name="primary_light">#1F4A9BDC</color>
+    <color name="accent_color">#FF7043</color>
+    
+    <!-- Text Colors -->
+    <color name="text_tertiary">#808080</color>
+    <color name="primary_text">#FFFFFF</color>
+    <color name="secondary_text">#B3B3B3</color>
+    
+    <!-- Additional missing colors -->
+    <color name="warning">#FFA726</color>
+    <color name="error">#EF5350</color>
+    <color name="error_color">#EF5350</color>
+    <color name="success">#66BB6A</color>
+    <color name="info">#42A5F5</color>
+    <color name="accent">#EC407A</color>
+    <color name="background">#121212</color>
+    <color name="surface_color">#1E1E1E</color>
+    <color name="warning_color">#FFA726</color>
+    <color name="info_color">#42A5F5</color>
+    
+    <!-- Quiz and Gaming Colors -->
+    <color name="quiz_card_background">#1E1E1E</color>
+    
+    <!-- Additional Surface Colors -->
+    <color name="cardview_light_background">#2F2F2F</color>
+    <color name="info_background">#1A2332</color>
+    
+    <!-- Material 3 Theme Attributes Support -->
+    <color name="colorSurface">#1E1E1E</color>
+    <color name="colorSurfaceVariant">#404040</color>
+    <color name="colorOnSurface">#FFFFFF</color>
+    <color name="colorOnSurfaceVariant">#B3B3B3</color>
 </resources>

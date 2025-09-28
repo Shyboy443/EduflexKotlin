@@ -49,13 +49,13 @@ class UserRoleAdapter(
         private val toggleStatusButton: MaterialButton = itemView.findViewById(R.id.toggleStatusButton)
 
         fun bind(user: User) {
-            nameTextView.text = user.name
+            nameTextView.text = user.fullName
             emailTextView.text = user.email
-            roleTextView.text = user.role.name
+            roleTextView.text = user.role
             statusTextView.text = if (user.isActive) "Active" else "Inactive"
             
             val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-            lastLoginTextView.text = "Last login: ${dateFormat.format(Date(user.lastLoginAt))}"
+            lastLoginTextView.text = "Joined: ${dateFormat.format(user.createdAt)}"
             
             // Set status color
             val statusColor = if (user.isActive) {

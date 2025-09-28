@@ -94,16 +94,20 @@ class CourseListActivity : AppCompatActivity() {
     private fun setupRecyclerView() {
         courseAdapter = CourseAdapter(
             courses = filteredCourses,
+            enrolledCourses = emptyList(), // Empty list for teacher's course management view
             onCourseClick = { course ->
-                // TODO: Navigate to course details
-                Toast.makeText(this, "Course clicked: ${course.title}", Toast.LENGTH_SHORT).show()
+                val intent = Intent(this, CourseDetailsActivity::class.java)
+                intent.putExtra("COURSE_ID", course.id)
+                startActivity(intent)
             },
             onEditClick = { course ->
                 editCourse(course)
             },
             onMenuClick = { course, view ->
                 showCourseMenu(course, view)
-            }
+            },
+            showAsEnrolled = false, // Show as available courses with Enroll button
+            isTeacherView = true // Teacher view for course management
         )
 
         // Use GridLayoutManager for better course display
@@ -142,8 +146,7 @@ class CourseListActivity : AppCompatActivity() {
 
         try {
             db.collection("courses")
-                .whereEqualTo("teacherId", currentUser.uid)
-                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .whereEqualTo("instructor.id", currentUser.uid)
                 .addSnapshotListener { snapshot, e ->
                     if (e != null) {
                         Toast.makeText(this, "Error loading courses: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
@@ -154,21 +157,29 @@ class CourseListActivity : AppCompatActivity() {
                         allCourses.clear()
                         for (document in snapshot.documents) {
                             try {
+                                // Map EnhancedCourse structure to Course model
+                                val instructorMap = document.get("instructor") as? Map<String, Any>
+                                val categoryMap = document.get("category") as? Map<String, Any>
+                                val pricingMap = document.get("pricing") as? Map<String, Any>
+                                val settingsMap = document.get("settings") as? Map<String, Any>
+                                
                                 val course = Course(
                                     id = document.id,
                                     title = document.getString("title") ?: "",
                                     description = document.getString("description") ?: "",
-                                    category = document.getString("category") ?: "",
-                                    duration = document.getString("duration") ?: "",
-                                    difficulty = document.getString("level") ?: "",
-                                    instructor = document.getString("instructor") ?: "",
-                                    teacherId = document.getString("teacherId") ?: "",
-                                    thumbnailUrl = document.getString("imageUrl") ?: "",
-                                    isPublished = document.getBoolean("isPublished") ?: false,
+                                    category = categoryMap?.get("name") as? String ?: "",
+                                    duration = "Self-paced", // EnhancedCourse doesn't have simple duration string
+                                    difficulty = document.getString("difficulty")?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Beginner",
+                                    instructor = instructorMap?.get("name") as? String ?: "Teacher",
+                                    teacherId = instructorMap?.get("id") as? String ?: "",
+                                    thumbnailUrl = document.getString("thumbnailUrl") ?: "",
+                                    isPublished = settingsMap?.get("isPublished") as? Boolean ?: (document.getString("status") == "PUBLISHED"),
                                     createdAt = document.getLong("createdAt") ?: 0L,
                                     updatedAt = document.getLong("updatedAt") ?: 0L,
-                                    enrolledStudents = document.getLong("enrolledStudents")?.toInt() ?: 0,
-                                    rating = document.getDouble("rating")?.toFloat() ?: 0.0f
+                                    enrolledStudents = 0, // Will be calculated separately
+                                    rating = 0.0f, // Will be calculated from reviews
+                                    isFree = pricingMap?.get("isFree") as? Boolean ?: true,
+                                    price = pricingMap?.get("price") as? Double ?: 0.0
                                 )
                                 allCourses.add(course)
                             } catch (ex: Exception) {
@@ -176,6 +187,10 @@ class CourseListActivity : AppCompatActivity() {
                                 continue
                             }
                         }
+                        
+                        // Sort courses by createdAt in descending order (newest first)
+                        allCourses.sortByDescending { it.createdAt }
+                        
                         filterCourses()
                         updateEmptyState()
                     }
@@ -248,40 +263,28 @@ class CourseListActivity : AppCompatActivity() {
     }
 
     private fun showCourseMenu(course: Course, view: View) {
-        val popup = PopupMenu(this, view)
-        popup.menuInflater.inflate(R.menu.course_menu, popup.menu)
-        
-        // Update publish/unpublish menu item based on course status
-        val publishMenuItem = popup.menu.findItem(R.id.action_publish_unpublish)
-        if (course.isPublished) {
-            publishMenuItem.title = "Unpublish Course"
-        } else {
-            publishMenuItem.title = "Publish Course"
-        }
-        
-        popup.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.action_edit -> {
-                    editCourse(course)
+        val popupMenu = PopupMenu(view.context, view)
+        val inflater = popupMenu.menuInflater
+        inflater.inflate(R.menu.course_menu, popupMenu.menu)  // Use your custom menu XML
+
+        popupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.action_enroll -> {
+                    // Enroll course logic
+                    enrollInCourse(course)
                     true
                 }
-                R.id.action_publish_unpublish -> {
-                    toggleCoursePublishStatus(course)
-                    true
-                }
-                R.id.action_delete -> {
-                    showDeleteConfirmation(course)
-                    true
-                }
-                R.id.action_duplicate -> {
-                    duplicateCourse(course)
+                R.id.action_unenroll -> {
+                    // Unenroll course logic
+                    unenrollFromCourse(course)
                     true
                 }
                 else -> false
             }
         }
-        popup.show()
+        popupMenu.show()
     }
+
 
     private fun showDeleteConfirmation(course: Course) {
         AlertDialog.Builder(this)
@@ -394,6 +397,78 @@ class CourseListActivity : AppCompatActivity() {
                     Toast.makeText(this@CourseListActivity, "Error updating course status: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         }
+    }
+
+    private fun enrollInCourse(course: Course) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, "Please log in to enroll in courses", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Create enrollment document
+        val enrollmentData = mapOf(
+            "studentId" to currentUser.uid,
+            "courseId" to course.id,
+            "enrolledAt" to System.currentTimeMillis(),
+            "isActive" to true,
+            "progress" to 0,
+            "completedLessons" to 0,
+            "lastAccessedAt" to System.currentTimeMillis(),
+            "status" to "active"
+        )
+
+        db.collection("enrollments")
+            .add(enrollmentData)
+            .addOnSuccessListener {
+                // Update course enrolled students count
+                db.collection("courses").document(course.id)
+                    .update("enrolledStudents", course.enrolledStudents + 1)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Successfully enrolled in ${course.title}", Toast.LENGTH_SHORT).show()
+                        loadCourses() // Reload to update UI
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to enroll: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun unenrollFromCourse(course: Course) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Toast.makeText(this, "Please log in to manage enrollments", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Find and delete enrollment
+        db.collection("enrollments")
+            .whereEqualTo("studentId", currentUser.uid)
+            .whereEqualTo("courseId", course.id)
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!documents.isEmpty) {
+                    val enrollmentDoc = documents.documents[0]
+                    enrollmentDoc.reference.delete()
+                        .addOnSuccessListener {
+                            // Update course enrolled students count
+                            db.collection("courses").document(course.id)
+                                .update("enrolledStudents", maxOf(0, course.enrolledStudents - 1))
+                                .addOnSuccessListener {
+                                    Toast.makeText(this, "Successfully unenrolled from ${course.title}", Toast.LENGTH_SHORT).show()
+                                    loadCourses() // Reload to update UI
+                                }
+                        }
+                        .addOnFailureListener { e ->
+                            Toast.makeText(this, "Failed to unenroll: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    Toast.makeText(this, "You are not enrolled in this course", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to check enrollment: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     override fun onBackPressed() {

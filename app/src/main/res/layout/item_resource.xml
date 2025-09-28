@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/card_resource"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tv_resource_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Resource Title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tv_resource_type"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Document"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:background="@drawable/bg_tag"
+            android:padding="4dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tv_resource_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="https://example.com/resource"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

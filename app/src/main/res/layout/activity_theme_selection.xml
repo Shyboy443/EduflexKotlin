@@ -12,7 +12,7 @@
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginTop="32dp"
-        android:src="@drawable/ic_logo_colorful"
+        android:src="@drawable/logo"
         android:contentDescription="EduFlex Logo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -69,7 +69,7 @@
             android:foreground="?attr/selectableItemBackground"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@color/white">
+            app:cardBackgroundColor="@color/surface_primary">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -85,7 +85,7 @@
                     android:layout_marginEnd="20dp"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
-                    app:cardBackgroundColor="@color/white">
+                    app:cardBackgroundColor="@color/surface_primary">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -168,7 +168,7 @@
             android:foreground="?attr/selectableItemBackground"
             app:cardCornerRadius="16dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@color/white">
+            app:cardBackgroundColor="@color/surface_primary">
 
             <LinearLayout
                 android:layout_width="match_parent"

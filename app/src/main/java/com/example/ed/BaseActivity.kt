@@ -17,6 +17,9 @@ abstract class BaseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        // Apply current theme before any UI setup
+        ThemeManager.applyCurrentTheme(this)
+        
         // Initialize performance monitoring
         PerformanceOptimizer.initialize(this)
         lifecycle.addObserver(PerformanceOptimizer)

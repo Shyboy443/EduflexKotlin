@@ -61,8 +61,8 @@ class HomeActivity : AppCompatActivity() {
         val intent = when (role) {
             "Admin" -> Intent(this, AdminDashboardActivity::class.java)
             "Teacher" -> Intent(this, TeacherDashboardActivity::class.java)
-            "Student" -> Intent(this, StudentDashboardActivity::class.java)
-            else -> Intent(this, StudentDashboardActivity::class.java) // Default to student
+            "Student" -> Intent(this, StudentDashboardFragmentActivity::class.java)
+            else -> Intent(this, StudentDashboardFragmentActivity::class.java) // Default to student
         }
         startActivity(intent)
         finish()

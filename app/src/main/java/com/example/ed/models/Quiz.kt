@@ -38,6 +38,9 @@ data class Question(
     val createdAt: Long = System.currentTimeMillis()
 )
 
+// Alias for compatibility with lesson system
+typealias QuizQuestion = Question
+
 data class QuizAttempt(
     val id: String = "",
     val quizId: String = "",

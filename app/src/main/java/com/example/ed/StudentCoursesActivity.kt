@@ -86,11 +86,16 @@ class StudentCoursesActivity : BaseActivity() {
     private fun setupRecyclerView() {
         courseAdapter = CourseAdapter(
             courses = mutableListOf(),
+            enrolledCourses = emptyList(), // No enrolled courses filtering needed here
             onCourseClick = { course ->
                 val intent = Intent(this, CourseDetailsActivity::class.java)
                 intent.putExtra("COURSE_ID", course.id)
                 startActivity(intent)
-            }
+            },
+            onEditClick = null, // No edit functionality for students
+            onMenuClick = null,  // No menu functionality for students
+            showAsEnrolled = false, // Show as available courses with Enroll button
+            isTeacherView = false
         )
         
         recyclerView.apply {
@@ -269,13 +274,11 @@ class StudentCoursesActivity : BaseActivity() {
         val query = if (category == "All") {
             firestore.collection("courses")
                 .whereEqualTo("isPublished", true)
-                .orderBy("enrolledStudents", Query.Direction.DESCENDING)
                 .limit(20)
         } else {
             firestore.collection("courses")
                 .whereEqualTo("isPublished", true)
                 .whereEqualTo("category", category)
-                .orderBy("enrolledStudents", Query.Direction.DESCENDING)
                 .limit(20)
         }
 
@@ -288,8 +291,12 @@ class StudentCoursesActivity : BaseActivity() {
                         null
                     }
                 }
-                courseAdapter.updateCourses(courses)
-                if (courses.isEmpty()) {
+                
+                // Sort courses by enrolledStudents in descending order (most popular first)
+                val sortedCourses = courses.sortedByDescending { it.enrolledStudents }
+                
+                courseAdapter.updateCourses(sortedCourses)
+                if (sortedCourses.isEmpty()) {
                     Toast.makeText(this, "No courses found in $category", Toast.LENGTH_SHORT).show()
                 }
             }

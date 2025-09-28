@@ -1,13 +1,14 @@
 package com.example.ed
 
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.widget.Toolbar
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -15,9 +16,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import com.example.ed.models.*
-import com.example.ed.adapters.ModuleAdapter
-import com.example.ed.adapters.LearningObjectiveAdapter
-import com.example.ed.adapters.PrerequisiteAdapter
 import java.util.*
 
 class EnhancedCourseCreationActivity : AppCompatActivity() {
@@ -35,6 +33,8 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
     private lateinit var spinnerDifficulty: Spinner
     private lateinit var spinnerLanguage: Spinner
     private lateinit var etTags: TextInputEditText
+    private lateinit var ivThumbnailPreview: ImageView
+    private lateinit var btnSelectThumbnail: Button
     
     // UI Components - Pricing Tab
     private lateinit var switchIsFree: Switch
@@ -42,53 +42,27 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
     private lateinit var etDiscountPrice: TextInputEditText
     private lateinit var etDiscountPercentage: TextInputEditText
     
-    // UI Components - Content Tab
-    private lateinit var rvModules: RecyclerView
-    private lateinit var moduleAdapter: ModuleAdapter
-    private lateinit var btnAddModule: Button
-    
-    // UI Components - Objectives Tab
-    private lateinit var rvLearningObjectives: RecyclerView
-    private lateinit var learningObjectiveAdapter: LearningObjectiveAdapter
-    private lateinit var btnAddObjective: Button
-    private lateinit var rvPrerequisites: RecyclerView
-    private lateinit var prerequisiteAdapter: PrerequisiteAdapter
-    private lateinit var btnAddPrerequisite: Button
-    
-    // UI Components - Settings Tab
-    private lateinit var switchAllowEnrollment: Switch
-    private lateinit var switchAllowDiscussions: Switch
-    private lateinit var switchAllowDownloads: Switch
-    private lateinit var switchCertificateEnabled: Switch
-    private lateinit var switchDripContent: Switch
-    private lateinit var etMaxStudents: TextInputEditText
-    
-    // UI Components - Media Tab
-    private lateinit var ivCourseThumbnail: ImageView
-    private lateinit var btnSelectThumbnail: Button
-    private lateinit var btnSelectPreviewVideo: Button
-    private lateinit var tvPreviewVideoStatus: TextView
+
     
     // UI Components - Navigation
+    private lateinit var toolbar: Toolbar
     private lateinit var tabLayout: TabLayout
     private lateinit var btnSaveDraft: Button
     private lateinit var btnPublishCourse: Button
     private lateinit var btnPreview: Button
     
     // Data
-    private var courseModules = mutableListOf<CourseModule>()
-    private var learningObjectives = mutableListOf<String>()
-    private var prerequisites = mutableListOf<String>()
-    private var selectedThumbnailUri: Uri? = null
-    private var selectedPreviewVideoUri: Uri? = null
-    private var uploadedThumbnailUrl: String = ""
-    private var uploadedPreviewVideoUrl: String = ""
     private var currentCourse: EnhancedCourse? = null
     private var isEditMode = false
-
-    companion object {
-        private const val REQUEST_THUMBNAIL_IMAGE = 1001
-        private const val REQUEST_PREVIEW_VIDEO = 1002
+    private var selectedThumbnailUri: Uri? = null
+    private var uploadedThumbnailUrl: String? = null
+    
+    // Activity Result Launcher for image selection
+    private val imagePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            selectedThumbnailUri = it
+            displayThumbnailPreview(it)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,8 +84,8 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         // Initialize UI components
         initializeViews()
         
-        // Set up adapters
-        setupAdapters()
+        // Set up toolbar
+        setupToolbar()
         
         // Set up click listeners
         setupClickListeners()
@@ -133,6 +107,8 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         spinnerDifficulty = findViewById(R.id.spinner_difficulty)
         spinnerLanguage = findViewById(R.id.spinner_language)
         etTags = findViewById(R.id.et_tags)
+        ivThumbnailPreview = findViewById(R.id.iv_thumbnail_preview)
+        btnSelectThumbnail = findViewById(R.id.btn_select_thumbnail)
         
         // Pricing Tab
         switchIsFree = findViewById(R.id.switch_is_free)
@@ -140,80 +116,17 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         etDiscountPrice = findViewById(R.id.et_discount_price)
         etDiscountPercentage = findViewById(R.id.et_discount_percentage)
         
-        // Content Tab
-        rvModules = findViewById(R.id.rv_modules)
-        btnAddModule = findViewById(R.id.btn_add_module)
-        
-        // Objectives Tab
-        rvLearningObjectives = findViewById(R.id.rv_learning_objectives)
-        btnAddObjective = findViewById(R.id.btn_add_objective)
-        rvPrerequisites = findViewById(R.id.rv_prerequisites)
-        btnAddPrerequisite = findViewById(R.id.btn_add_prerequisite)
-        
-        // Settings Tab
-        switchAllowEnrollment = findViewById(R.id.switch_allow_enrollment)
-        switchAllowDiscussions = findViewById(R.id.switch_allow_discussions)
-        switchAllowDownloads = findViewById(R.id.switch_allow_downloads)
-        switchCertificateEnabled = findViewById(R.id.switch_certificate_enabled)
-        switchDripContent = findViewById(R.id.switch_drip_content)
-        etMaxStudents = findViewById(R.id.et_max_students)
-        
-        // Media Tab
-        ivCourseThumbnail = findViewById(R.id.iv_course_thumbnail)
-        btnSelectThumbnail = findViewById(R.id.btn_select_thumbnail)
-        btnSelectPreviewVideo = findViewById(R.id.btn_select_preview_video)
-        tvPreviewVideoStatus = findViewById(R.id.tv_preview_video_status)
+
         
         // Navigation
+        toolbar = findViewById(R.id.toolbar)
         tabLayout = findViewById(R.id.tab_layout)
         btnSaveDraft = findViewById(R.id.btn_save_draft)
         btnPublishCourse = findViewById(R.id.btn_publish_course)
         btnPreview = findViewById(R.id.btn_preview)
     }
 
-    private fun setupAdapters() {
-        // Modules adapter
-        moduleAdapter = ModuleAdapter(courseModules) { module, action ->
-            handleModuleAction(module, action)
-        }
-        rvModules.layoutManager = LinearLayoutManager(this)
-        rvModules.adapter = moduleAdapter
-        
-        // Learning objectives adapter
-        learningObjectiveAdapter = LearningObjectiveAdapter(learningObjectives) { objective, position ->
-            handleObjectiveAction(objective, position)
-        }
-        rvLearningObjectives.layoutManager = LinearLayoutManager(this)
-        rvLearningObjectives.adapter = learningObjectiveAdapter
-        
-        // Prerequisites adapter
-        prerequisiteAdapter = PrerequisiteAdapter(prerequisites) { prerequisite, position ->
-            handlePrerequisiteAction(prerequisite, position)
-        }
-        rvPrerequisites.layoutManager = LinearLayoutManager(this)
-        rvPrerequisites.adapter = prerequisiteAdapter
-    }
-
     private fun setupClickListeners() {
-        btnAddModule.setOnClickListener {
-            showAddModuleDialog()
-        }
-        
-        btnAddObjective.setOnClickListener {
-            showAddObjectiveDialog()
-        }
-        
-        btnAddPrerequisite.setOnClickListener {
-            showAddPrerequisiteDialog()
-        }
-        
-        btnSelectThumbnail.setOnClickListener {
-            selectThumbnailImage()
-        }
-        
-        btnSelectPreviewVideo.setOnClickListener {
-            selectPreviewVideo()
-        }
         
         btnSaveDraft.setOnClickListener {
             saveCourse(isDraft = true)
@@ -231,15 +144,22 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         switchIsFree.setOnCheckedChangeListener { _, isChecked ->
             togglePricingFields(!isChecked)
         }
+        
+        // Thumbnail selection listener
+        btnSelectThumbnail.setOnClickListener {
+            imagePickerLauncher.launch("image/*")
+        }
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        toolbar.setNavigationOnClickListener { finish() }
     }
 
     private fun setupTabNavigation() {
         tabLayout.addTab(tabLayout.newTab().setText("Basic Info"))
-        tabLayout.addTab(tabLayout.newTab().setText("Content"))
-        tabLayout.addTab(tabLayout.newTab().setText("Objectives"))
         tabLayout.addTab(tabLayout.newTab().setText("Pricing"))
-        tabLayout.addTab(tabLayout.newTab().setText("Settings"))
-        tabLayout.addTab(tabLayout.newTab().setText("Media"))
         
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
@@ -258,21 +178,13 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         // Show selected tab content
         when (position) {
             0 -> findViewById<View>(R.id.tab_basic_info).visibility = View.VISIBLE
-            1 -> findViewById<View>(R.id.tab_content).visibility = View.VISIBLE
-            2 -> findViewById<View>(R.id.tab_objectives).visibility = View.VISIBLE
-            3 -> findViewById<View>(R.id.tab_pricing).visibility = View.VISIBLE
-            4 -> findViewById<View>(R.id.tab_settings).visibility = View.VISIBLE
-            5 -> findViewById<View>(R.id.tab_media).visibility = View.VISIBLE
+            1 -> findViewById<View>(R.id.tab_pricing).visibility = View.VISIBLE
         }
     }
 
     private fun hideAllTabContent() {
         findViewById<View>(R.id.tab_basic_info).visibility = View.GONE
-        findViewById<View>(R.id.tab_content).visibility = View.GONE
-        findViewById<View>(R.id.tab_objectives).visibility = View.GONE
         findViewById<View>(R.id.tab_pricing).visibility = View.GONE
-        findViewById<View>(R.id.tab_settings).visibility = View.GONE
-        findViewById<View>(R.id.tab_media).visibility = View.GONE
     }
 
     private fun loadInitialData() {
@@ -305,11 +217,6 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
 
     private fun setDefaultValues() {
         switchIsFree.isChecked = true
-        switchAllowEnrollment.isChecked = true
-        switchAllowDiscussions.isChecked = true
-        switchAllowDownloads.isChecked = true
-        switchCertificateEnabled.isChecked = false
-        switchDripContent.isChecked = false
         
         togglePricingFields(false)
     }
@@ -320,121 +227,21 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         etDiscountPercentage.isEnabled = enabled
     }
 
-    private fun showAddModuleDialog() {
-        // Implementation for adding new module
-        val intent = Intent(this, ModuleCreationActivity::class.java)
-        startActivityForResult(intent, 1003)
-    }
 
-    private fun showAddObjectiveDialog() {
-        // Implementation for adding learning objective
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        val input = EditText(this)
-        input.hint = "Enter learning objective"
-        
-        builder.setTitle("Add Learning Objective")
-            .setView(input)
-            .setPositiveButton("Add") { _, _ ->
-                val objective = input.text.toString().trim()
-                if (objective.isNotEmpty()) {
-                    learningObjectives.add(objective)
-                    learningObjectiveAdapter.notifyItemInserted(learningObjectives.size - 1)
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun showAddPrerequisiteDialog() {
-        // Implementation for adding prerequisite
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        val input = EditText(this)
-        input.hint = "Enter prerequisite"
-        
-        builder.setTitle("Add Prerequisite")
-            .setView(input)
-            .setPositiveButton("Add") { _, _ ->
-                val prerequisite = input.text.toString().trim()
-                if (prerequisite.isNotEmpty()) {
-                    prerequisites.add(prerequisite)
-                    prerequisiteAdapter.notifyItemInserted(prerequisites.size - 1)
-                }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun selectThumbnailImage() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "image/*"
-        startActivityForResult(intent, REQUEST_THUMBNAIL_IMAGE)
-    }
-
-    private fun selectPreviewVideo() {
-        val intent = Intent(Intent.ACTION_GET_CONTENT)
-        intent.type = "video/*"
-        startActivityForResult(intent, REQUEST_PREVIEW_VIDEO)
-    }
-
-    private fun handleModuleAction(module: CourseModule, action: String) {
-        when (action) {
-            "edit" -> editModule(module)
-            "delete" -> deleteModule(module)
-            "reorder" -> reorderModule(module)
-        }
-    }
-
-    private fun handleObjectiveAction(objective: String, position: Int) {
-        learningObjectives.removeAt(position)
-        learningObjectiveAdapter.notifyItemRemoved(position)
-    }
-
-    private fun handlePrerequisiteAction(prerequisite: String, position: Int) {
-        prerequisites.removeAt(position)
-        prerequisiteAdapter.notifyItemRemoved(position)
-    }
-
-    private fun editModule(module: CourseModule) {
-        val intent = Intent(this, ModuleCreationActivity::class.java)
-        intent.putExtra("moduleId", module.id)
-        startActivityForResult(intent, 1004)
-    }
-
-    private fun deleteModule(module: CourseModule) {
-        val builder = androidx.appcompat.app.AlertDialog.Builder(this)
-        builder.setTitle("Delete Module")
-            .setMessage("Are you sure you want to delete this module? This action cannot be undone.")
-            .setPositiveButton("Delete") { _, _ ->
-                courseModules.remove(module)
-                moduleAdapter.notifyDataSetChanged()
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun reorderModule(module: CourseModule) {
-        // Implementation for reordering modules
-        Toast.makeText(this, "Module reordering feature coming soon", Toast.LENGTH_SHORT).show()
-    }
 
     private fun saveCourse(isDraft: Boolean) {
         if (!validateCourseData()) {
             return
         }
         
-        val course = buildCourseObject(isDraft)
-        
         // Show progress
         val progressDialog = android.app.ProgressDialog(this)
         progressDialog.setMessage("Saving course...")
         progressDialog.show()
         
-        // Upload media files first if any
-        uploadMediaFiles { thumbnailUrl, previewVideoUrl ->
-            course.copy(
-                thumbnailUrl = thumbnailUrl,
-                previewVideoUrl = previewVideoUrl
-            )
+        // Upload thumbnail first, then save course
+        uploadThumbnailToStorage { thumbnailUrl ->
+            val course = buildCourseObject(isDraft, thumbnailUrl)
             
             // Save to Firestore
             saveCourseToFirestore(course) { success ->
@@ -487,28 +294,12 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
             return false
         }
         
-        if (courseModules.isEmpty()) {
-            Toast.makeText(this, "Course must have at least one module", Toast.LENGTH_SHORT).show()
-            tabLayout.getTabAt(1)?.select()
-            return false
-        }
-        
-        if (learningObjectives.isEmpty()) {
-            Toast.makeText(this, "Course must have learning objectives", Toast.LENGTH_SHORT).show()
-            tabLayout.getTabAt(2)?.select()
-            return false
-        }
-        
-        if (uploadedThumbnailUrl.isEmpty() && selectedThumbnailUri == null) {
-            Toast.makeText(this, "Course thumbnail is required for publishing", Toast.LENGTH_SHORT).show()
-            tabLayout.getTabAt(5)?.select()
-            return false
-        }
+
         
         return true
     }
 
-    private fun buildCourseObject(isDraft: Boolean): EnhancedCourse {
+    private fun buildCourseObject(isDraft: Boolean, thumbnailUrl: String? = null): EnhancedCourse {
         val currentUser = auth.currentUser!!
         
         return EnhancedCourse(
@@ -517,6 +308,7 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
             subtitle = etCourseSubtitle.text.toString().trim(),
             description = etShortDescription.text.toString().trim(),
             longDescription = etLongDescription.text.toString().trim(),
+            thumbnailUrl = thumbnailUrl ?: uploadedThumbnailUrl ?: "",
             instructor = TeacherProfile(
                 id = currentUser.uid,
                 name = currentUser.displayName ?: "Teacher"
@@ -529,10 +321,10 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
             ),
             language = spinnerLanguage.selectedItem.toString().lowercase(),
             tags = etTags.text.toString().split(",").map { it.trim() }.filter { it.isNotEmpty() },
-            learningObjectives = learningObjectives.toList(),
-            prerequisites = prerequisites.toList(),
+            learningObjectives = emptyList(),
+            prerequisites = emptyList(),
             courseStructure = CourseStructure(
-                modules = courseModules.toList()
+                modules = emptyList()
             ),
             pricing = CoursePricing(
                 isFree = switchIsFree.isChecked,
@@ -541,45 +333,19 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
             ),
             settings = CourseSettings(
                 isPublished = !isDraft,
-                allowEnrollment = switchAllowEnrollment.isChecked,
-                allowDiscussions = switchAllowDiscussions.isChecked,
-                allowDownloads = switchAllowDownloads.isChecked,
-                certificateEnabled = switchCertificateEnabled.isChecked,
-                dripContent = switchDripContent.isChecked,
-                maxStudents = etMaxStudents.text.toString().toIntOrNull() ?: 0
+                allowEnrollment = true,
+                allowDiscussions = true,
+                allowDownloads = true,
+                certificateEnabled = false,
+                dripContent = false,
+                maxStudents = 0
             ),
             status = if (isDraft) CourseStatus.DRAFT else CourseStatus.PUBLISHED,
             updatedAt = System.currentTimeMillis()
         )
     }
 
-    private fun uploadMediaFiles(callback: (String, String) -> Unit) {
-        var thumbnailUrl = uploadedThumbnailUrl
-        var previewVideoUrl = uploadedPreviewVideoUrl
-        var uploadCount = 0
-        val totalUploads = listOfNotNull(selectedThumbnailUri, selectedPreviewVideoUri).size
-        
-        if (totalUploads == 0) {
-            callback(thumbnailUrl, previewVideoUrl)
-            return
-        }
-        
-        selectedThumbnailUri?.let { uri ->
-            // Upload thumbnail implementation
-            uploadCount++
-            if (uploadCount == totalUploads) {
-                callback(thumbnailUrl, previewVideoUrl)
-            }
-        }
-        
-        selectedPreviewVideoUri?.let { uri ->
-            // Upload preview video implementation
-            uploadCount++
-            if (uploadCount == totalUploads) {
-                callback(thumbnailUrl, previewVideoUrl)
-            }
-        }
-    }
+
 
     private fun saveCourseToFirestore(course: EnhancedCourse, callback: (Boolean) -> Unit) {
         db.collection("courses")
@@ -620,56 +386,50 @@ class EnhancedCourseCreationActivity : AppCompatActivity() {
         etLongDescription.setText(course.longDescription)
         etTags.setText(course.tags.joinToString(", "))
         
-        // Populate other fields...
-        learningObjectives.clear()
-        learningObjectives.addAll(course.learningObjectives)
-        learningObjectiveAdapter.notifyDataSetChanged()
+        // Populate pricing
+        switchIsFree.isChecked = course.pricing.isFree
+        etPrice.setText(course.pricing.price.toString())
+        etDiscountPrice.setText(course.pricing.discountPrice.toString())
         
-        prerequisites.clear()
-        prerequisites.addAll(course.prerequisites)
-        prerequisiteAdapter.notifyDataSetChanged()
-        
-        courseModules.clear()
-        courseModules.addAll(course.courseStructure.modules)
-        moduleAdapter.notifyDataSetChanged()
-        
-        uploadedThumbnailUrl = course.thumbnailUrl
-        uploadedPreviewVideoUrl = course.previewVideoUrl
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        if (resultCode == RESULT_OK && data != null) {
-            when (requestCode) {
-                REQUEST_THUMBNAIL_IMAGE -> {
-                    selectedThumbnailUri = data.data
-                    ivCourseThumbnail.setImageURI(selectedThumbnailUri)
-                }
-                REQUEST_PREVIEW_VIDEO -> {
-                    selectedPreviewVideoUri = data.data
-                    tvPreviewVideoStatus.text = "Preview video selected"
-                }
-                1003 -> {
-                    // Module added
-                    val moduleData = data.getSerializableExtra("module") as? CourseModule
-                    moduleData?.let {
-                        courseModules.add(it)
-                        moduleAdapter.notifyItemInserted(courseModules.size - 1)
-                    }
-                }
-                1004 -> {
-                    // Module edited
-                    val moduleData = data.getSerializableExtra("module") as? CourseModule
-                    moduleData?.let { updatedModule ->
-                        val index = courseModules.indexOfFirst { it.id == updatedModule.id }
-                        if (index != -1) {
-                            courseModules[index] = updatedModule
-                            moduleAdapter.notifyItemChanged(index)
-                        }
-                    }
-                }
-            }
+        // Load thumbnail if exists
+        course.thumbnailUrl?.let { url ->
+            uploadedThumbnailUrl = url
+            loadThumbnailFromUrl(url)
         }
     }
+
+    private fun displayThumbnailPreview(uri: Uri) {
+        ivThumbnailPreview.setImageURI(uri)
+        ivThumbnailPreview.visibility = View.VISIBLE
+        btnSelectThumbnail.text = "Change Thumbnail"
+    }
+
+    private fun loadThumbnailFromUrl(url: String) {
+        // For now, we'll just show the ImageView and update button text
+        // In a real app, you'd use an image loading library like Glide or Picasso
+        ivThumbnailPreview.visibility = View.VISIBLE
+        btnSelectThumbnail.text = "Change Thumbnail"
+    }
+
+    private fun uploadThumbnailToStorage(callback: (String?) -> Unit) {
+        selectedThumbnailUri?.let { uri ->
+            val thumbnailRef = storage.reference
+                .child("course_thumbnails")
+                .child("${UUID.randomUUID()}.jpg")
+
+            thumbnailRef.putFile(uri)
+                .addOnSuccessListener {
+                    thumbnailRef.downloadUrl.addOnSuccessListener { downloadUrl ->
+                        uploadedThumbnailUrl = downloadUrl.toString()
+                        callback(downloadUrl.toString())
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Toast.makeText(this, "Failed to upload thumbnail: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    callback(null)
+                }
+        } ?: callback(uploadedThumbnailUrl)
+    }
+
+
 }

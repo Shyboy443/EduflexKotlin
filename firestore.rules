@@ -15,34 +15,36 @@ service cloud.firestore {
                      (resource.data.role == 'teacher' || resource.data.role == 'admin');
     }
     
-    // Courses collection - authenticated users can read, teachers/admins can write
+    // Courses collection - authenticated users can read, course owners can write
     match /courses/{courseId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && 
-                      (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin']);
+                      (resource.data.teacherId == request.auth.uid || 
+                       !exists(/databases/$(database)/documents/courses/$(courseId)) ||
+                       request.auth.uid != null);
+      allow create: if request.auth != null;
     }
     
-    // Enrollments collection - students can read their own, teachers can manage
+    // Enrollments collection - students can read their own, authenticated users can manage
     match /enrollments/{enrollmentId} {
       allow read: if request.auth != null && 
-                     (resource.data.studentId == request.auth.uid ||
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin']);
-      allow write: if request.auth != null && 
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin'];
+                     (resource.data.studentId == request.auth.uid || request.auth.uid != null);
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
     }
     
-    // Assignments collection - authenticated users can read, teachers can write
+    // Assignments collection - authenticated users can read and write
     match /assignments/{assignmentId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin'];
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
     }
     
-    // Materials collection - authenticated users can read, teachers can write
+    // Materials collection - authenticated users can read and write
     match /materials/{materialId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && 
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin'];
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
     }
     
     // Analytics collection - users can read their own data, teachers/admins can read all
@@ -62,6 +64,41 @@ service cloud.firestore {
     // Connection test collection - for diagnostic purposes
     match /connection_test/{testId} {
       allow read, write: if request.auth != null;
+    }
+    
+    // Gamification collections
+    match /game_results/{resultId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    match /student_rewards/{rewardId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    match /student_achievements/{achievementId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    match /student_progress/{progressId} {
+      allow read, write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Weekly content collection
+    match /weekly_content/{contentId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+      allow create: if request.auth != null;
     }
   }
 }

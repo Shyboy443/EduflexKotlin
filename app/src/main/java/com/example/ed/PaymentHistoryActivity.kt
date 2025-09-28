@@ -102,7 +102,6 @@ class PaymentHistoryActivity : AppCompatActivity() {
 
         firestore.collection("payments")
             .whereEqualTo("userId", currentUser.uid)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { documents ->
                 paymentHistory.clear()
@@ -110,6 +109,9 @@ class PaymentHistoryActivity : AppCompatActivity() {
                     val payment = document.toObject(PaymentRecord::class.java)
                     paymentHistory.add(payment)
                 }
+                
+                // Sort payments by timestamp in descending order (newest first)
+                paymentHistory.sortByDescending { it.timestamp }
                 
                 if (paymentHistory.isEmpty()) {
                     showEmptyState()

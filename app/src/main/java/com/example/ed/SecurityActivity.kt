@@ -124,38 +124,34 @@ class SecurityActivity : AppCompatActivity() {
             User(
                 id = "user1",
                 email = "admin@school.edu",
-                name = "John Admin",
-                role = UserRole.ADMIN,
+                fullName = "John Admin",
+                role = "Admin",
                 isActive = true,
-                lastLoginAt = System.currentTimeMillis(),
-                createdAt = System.currentTimeMillis() - 86400000 * 30
+                createdAt = Date(System.currentTimeMillis() - 86400000 * 30)
             ),
             User(
                 id = "user2",
                 email = "teacher1@school.edu",
-                name = "Alice Teacher",
-                role = UserRole.TEACHER,
+                fullName = "Alice Teacher",
+                role = "Teacher",
                 isActive = true,
-                lastLoginAt = System.currentTimeMillis() - 3600000,
-                createdAt = System.currentTimeMillis() - 86400000 * 15
+                createdAt = Date(System.currentTimeMillis() - 86400000 * 15)
             ),
             User(
                 id = "user3",
                 email = "student1@school.edu",
-                name = "Bob Student",
-                role = UserRole.STUDENT,
+                fullName = "Bob Student",
+                role = "Student",
                 isActive = true,
-                lastLoginAt = System.currentTimeMillis() - 1800000,
-                createdAt = System.currentTimeMillis() - 86400000 * 7
+                createdAt = Date(System.currentTimeMillis() - 86400000 * 7)
             ),
             User(
                 id = "user4",
                 email = "teacher2@school.edu",
-                name = "Carol Instructor",
-                role = UserRole.TEACHER,
+                fullName = "Carol Instructor",
+                role = "Teacher",
                 isActive = false,
-                lastLoginAt = System.currentTimeMillis() - 86400000 * 5,
-                createdAt = System.currentTimeMillis() - 86400000 * 60
+                createdAt = Date(System.currentTimeMillis() - 86400000 * 60)
             )
         )
         
@@ -202,9 +198,9 @@ class SecurityActivity : AppCompatActivity() {
                 val email = emailInput.text.toString()
                 val name = nameInput.text.toString()
                 val selectedRole = when (roleSpinner.selectedItemPosition) {
-                    0 -> UserRole.STUDENT
-                    1 -> UserRole.TEACHER
-                    else -> UserRole.ADMIN
+                    0 -> "Student"
+                    1 -> "Teacher"
+                    else -> "Admin"
                 }
                 
                 if (email.isNotEmpty() && name.isNotEmpty()) {
@@ -217,15 +213,14 @@ class SecurityActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun addNewUser(email: String, name: String, role: UserRole) {
+    private fun addNewUser(email: String, name: String, role: String) {
         val newUser = User(
             id = "user_${System.currentTimeMillis()}",
             email = email,
-            name = name,
+            fullName = name,
             role = role,
             isActive = true,
-            createdAt = System.currentTimeMillis(),
-            lastLoginAt = 0
+            createdAt = Date()
         )
         
         // Add to Firebase (mock)
@@ -241,26 +236,27 @@ class SecurityActivity : AppCompatActivity() {
         Toast.makeText(this, "User added successfully", Toast.LENGTH_SHORT).show()
     }
 
-    private fun getPermissionsForRole(role: UserRole): List<Permission> {
-        return when (role) {
-            UserRole.ADMIN -> listOf(
-                Permission.MANAGE_USERS,
-                Permission.MANAGE_COURSES,
-                Permission.VIEW_ANALYTICS,
-                Permission.MANAGE_SYSTEM,
-                Permission.GRADE_ASSIGNMENTS,
-                Permission.VIEW_STUDENT_PROGRESS
+    private fun getPermissionsForRole(role: String): List<String> {
+        return when (role.lowercase()) {
+            "admin" -> listOf(
+                "MANAGE_USERS",
+                "MANAGE_COURSES",
+                "VIEW_ANALYTICS",
+                "MANAGE_SYSTEM",
+                "GRADE_ASSIGNMENTS",
+                "VIEW_STUDENT_PROGRESS"
             )
-            UserRole.TEACHER -> listOf(
-                Permission.MANAGE_COURSES,
-                Permission.GRADE_ASSIGNMENTS,
-                Permission.VIEW_STUDENT_PROGRESS
+            "teacher" -> listOf(
+                "MANAGE_COURSES",
+                "GRADE_ASSIGNMENTS",
+                "VIEW_STUDENT_PROGRESS"
             )
-            UserRole.STUDENT -> listOf(
-                Permission.VIEW_COURSES,
-                Permission.SUBMIT_ASSIGNMENTS,
-                Permission.VIEW_GRADES
+            "student" -> listOf(
+                "VIEW_COURSES",
+                "SUBMIT_ASSIGNMENTS",
+                "VIEW_GRADES"
             )
+            else -> emptyList()
         }
     }
 
@@ -271,17 +267,18 @@ class SecurityActivity : AppCompatActivity() {
         val roleSpinner = dialogView.findViewById<Spinner>(R.id.roleSpinner)
         val permissionsLayout = dialogView.findViewById<LinearLayout>(R.id.permissionsLayout)
         
-        nameInput.setText(user.name)
+        nameInput.setText(user.fullName)
         
         // Setup role spinner
         val roles = arrayOf("Student", "Teacher", "Admin")
         val roleAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, roles)
         roleAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         roleSpinner.adapter = roleAdapter
-        roleSpinner.setSelection(when (user.role) {
-            UserRole.STUDENT -> 0
-            UserRole.TEACHER -> 1
-            UserRole.ADMIN -> 2
+        roleSpinner.setSelection(when (user.role.lowercase()) {
+            "student" -> 0
+            "teacher" -> 1
+            "admin" -> 2
+            else -> 0
         })
         
         // Simple role editing without complex permissions
@@ -305,7 +302,7 @@ class SecurityActivity : AppCompatActivity() {
     private fun deleteUserRole(user: User) {
         MaterialAlertDialogBuilder(this)
             .setTitle("Delete User")
-            .setMessage("Are you sure you want to delete ${user.name}? This action cannot be undone.")
+            .setMessage("Are you sure you want to delete ${user.fullName}? This action cannot be undone.")
             .setPositiveButton("Delete") { dialog, which ->
                 userRoles.remove(user)
                 userRoleAdapter.updateUserRoles(userRoles)
@@ -316,10 +313,14 @@ class SecurityActivity : AppCompatActivity() {
     }
 
     private fun toggleUserStatus(user: User) {
-        user.isActive = !user.isActive
-        userRoleAdapter.notifyDataSetChanged()
+        val updatedUser = user.copy(isActive = !user.isActive)
+        val index = userRoles.indexOf(user)
+        if (index != -1) {
+            userRoles[index] = updatedUser
+            userRoleAdapter.updateUserRoles(userRoles)
+        }
         
-        val status = if (user.isActive) "activated" else "deactivated"
+        val status = if (updatedUser.isActive) "activated" else "deactivated"
         Toast.makeText(this, "User $status", Toast.LENGTH_SHORT).show()
     }
 
@@ -363,7 +364,7 @@ class SecurityActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun sendInvitationEmail(email: String, name: String, role: UserRole) {
+    private fun sendInvitationEmail(email: String, name: String, role: String) {
         // Mock email sending
         Toast.makeText(this, "Invitation email sent to $email", Toast.LENGTH_SHORT).show()
     }
